@@ -1,4 +1,5 @@
 ﻿using RabbitMQ.Client;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -13,7 +14,7 @@ namespace PandemicShield.Parser
             ConnectionFactory connectionFactory = new ConnectionFactory() { HostName = "localhost" };
 
 
-            string filePath = "sequence.fasta";
+            string filePath = "hg38.fasta";
             try
             {
                 using var connection = await connectionFactory.CreateConnectionAsync();
@@ -30,6 +31,9 @@ namespace PandemicShield.Parser
                 StringBuilder buffer = new StringBuilder();
                 int overlap = 3;
                 int chunkSize = 1000;
+
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
 
                 while ((currentLine = await sr.ReadLineAsync()) != null)
                 {
@@ -55,7 +59,6 @@ namespace PandemicShield.Parser
                     }
 
                 }
-
                 if (buffer.Length > 0)
                 {
                     string chunkToSend = buffer.ToString();
@@ -67,6 +70,9 @@ namespace PandemicShield.Parser
                     );
                     Console.WriteLine($"Відправлено останній шматок геному довжиною {chunkToSend.Length} символів");
                 }
+
+                sw.Stop();
+                Console.WriteLine($"[ПАРСЕР] Файл оброблено і відправлено за {sw.ElapsedMilliseconds} мс");
 
             }
             catch (IOException e)

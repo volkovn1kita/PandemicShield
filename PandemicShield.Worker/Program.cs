@@ -23,15 +23,20 @@ namespace PandemicShield.Worker
 
             var consumer = new AsyncEventingBasicConsumer(channel);
 
-            string targetMutation = "CCCC";
+            byte[] targetMutationBytes = Encoding.UTF8.GetBytes("CCCC");
 
             consumer.ReceivedAsync += async (model, ea) =>
             {
-                byte[] body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                if (message.Contains(targetMutation))
+
+                ReadOnlySpan<byte> bodySpan = ea.Body.Span;
+
+                ReadOnlySpan<byte> targetSpan = targetMutationBytes;
+
+                if (bodySpan.IndexOf(targetSpan) >= 0)
                 {
-                    Console.WriteLine("УВАГА: Знайдено збіг мутації!");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"[!!!] УВАГА: Знайдено збіг мутації у повідомленні");
+                    Console.ResetColor();
                 }
 
                 await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
