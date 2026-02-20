@@ -8,6 +8,7 @@ namespace PandemicShield.Parser
     {
         static async Task Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             ConnectionFactory connectionFactory = new ConnectionFactory() { HostName = "localhost" };
 
@@ -17,42 +18,64 @@ namespace PandemicShield.Parser
             {
                 using var connection = await connectionFactory.CreateConnectionAsync();
                 using var channel = await connection.CreateChannelAsync();
-                {
-                    await channel.QueueDeclareAsync(
+                await channel.QueueDeclareAsync(
                         queue: "dna_chunks",
                         durable: false,
                         exclusive: false,
                         autoDelete: false
                     );
 
-                    using (StreamReader sr = new StreamReader(filePath))
+                using StreamReader sr = new StreamReader(filePath);
+                string? currentLine;
+                StringBuilder buffer = new StringBuilder();
+                int overlap = 3;
+                int chunkSize = 1000;
+
+                while ((currentLine = await sr.ReadLineAsync()) != null)
+                {
+                    if (string.IsNullOrWhiteSpace(currentLine)) continue;
+                    if (currentLine[0] == '>') continue;
+
+                    buffer.Append(currentLine);
+
+                    if (buffer.Length >= chunkSize)
                     {
-                        string? currentLine;
-                        while ((currentLine = await sr.ReadLineAsync()) != null)
-                        {
-                            if (string.IsNullOrWhiteSpace(currentLine)) continue;
-                            if (currentLine[0] == '>') continue;
+                        string chunkToSend = buffer.ToString(0, chunkSize);
+                        var body = Encoding.UTF8.GetBytes(chunkToSend);
 
-                            var body = Encoding.UTF8.GetBytes(currentLine);
+                        await channel.BasicPublishAsync(
+                            exchange: "",
+                            routingKey: "dna_chunks",
+                            body: body
+                        );
 
-                            await channel.BasicPublishAsync(
-                                exchange: "",
-                                routingKey: "dna_chunks",
-                                body: body
-                            );
+                        buffer.Remove(0, chunkSize - overlap);
 
-                            Console.WriteLine($"Відправлено шматок геному довжиною {currentLine.Length} символів");
-                        }
-
+                        Console.WriteLine($"Відправлено шматок геному довжиною {chunkToSend.Length} символів");
                     }
 
                 }
+
+                if (buffer.Length > 0)
+                {
+                    string chunkToSend = buffer.ToString();
+                    var body = Encoding.UTF8.GetBytes(chunkToSend);
+                    await channel.BasicPublishAsync(
+                        exchange: "",
+                        routingKey: "dna_chunks",
+                        body: body
+                    );
+                    Console.WriteLine($"Відправлено останній шматок геному довжиною {chunkToSend.Length} символів");
+                }
+
             }
             catch (IOException e)
             {
                 Console.WriteLine("File could not be read: ");
                 Console.WriteLine(e.Message);
             }
+
+            Console.ReadLine();
         }
     }
 }

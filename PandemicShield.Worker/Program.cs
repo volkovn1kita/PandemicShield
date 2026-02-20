@@ -13,30 +13,34 @@ namespace PandemicShield.Worker
             var factory = new ConnectionFactory() { HostName = "localhost"};
             using var connection = await factory.CreateConnectionAsync();
             using var channel = await connection.CreateChannelAsync();
-            {
-                await channel.QueueDeclareAsync(
+
+            await channel.QueueDeclareAsync(
                         queue: "dna_chunks",
                         durable: false,
                         exclusive: false,
                         autoDelete: false
-            );
+                );
 
-                var consumer = new AsyncEventingBasicConsumer(channel);
+            var consumer = new AsyncEventingBasicConsumer(channel);
 
-                consumer.ReceivedAsync += async (model, ea) =>
+            string targetMutation = "CCCC";
+
+            consumer.ReceivedAsync += async (model, ea) =>
+            {
+                byte[] body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                if (message.Contains(targetMutation))
                 {
-                    byte[] body = ea.Body.ToArray();
-                    var message = Encoding.UTF8.GetString(body);
-                    Console.WriteLine($" [x] Отримано кількість: {message.Length}");
+                    Console.WriteLine("УВАГА: Знайдено збіг мутації!");
+                }
 
-                    await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
+                await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
 
-                };
+            };
 
-                await channel.BasicConsumeAsync(queue: "dna_chunks", autoAck: false, consumer: consumer);
+            await channel.BasicConsumeAsync(queue: "dna_chunks", autoAck: false, consumer: consumer);
 
-                Console.ReadLine();
-            }
+            Console.ReadLine();
 
 
         }
