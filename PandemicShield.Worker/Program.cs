@@ -10,7 +10,9 @@ namespace PandemicShield.Worker
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            var factory = new ConnectionFactory() { HostName = "localhost"};
+            string rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhsot";
+
+            var factory = new ConnectionFactory() { HostName = rabbitHost };
             using var connection = await factory.CreateConnectionAsync();
             using var channel = await connection.CreateChannelAsync();
 

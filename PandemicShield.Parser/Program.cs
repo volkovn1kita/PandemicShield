@@ -11,7 +11,9 @@ namespace PandemicShield.Parser
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            ConnectionFactory connectionFactory = new ConnectionFactory() { HostName = "localhost" };
+            string rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
+
+            ConnectionFactory connectionFactory = new ConnectionFactory() { HostName = rabbitHost };
 
 
             string filePath = "hg38.fasta";
