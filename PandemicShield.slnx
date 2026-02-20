@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yaml" />
+  </Folder>
+  <Project Path="PandemicShield.Parser/PandemicShield.Parser.csproj" />
+  <Project Path="PandemicShield.Worker/PandemicShield.Worker.csproj" />
+</Solution>
