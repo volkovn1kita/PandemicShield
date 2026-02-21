@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PandemicShield.Worker.Data;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,9 +7,9 @@ namespace PandemicShield.Worker.Services
 {
     public class TranslationService
     {
-        public static List<string> FindProteins(string dna)
+        public static List<ProteinData> FindProteins(string dna, int chunkGlobalOffset)
         {
-            List<string> proteins = new List<string>();
+            List<ProteinData> proteins = new List<ProteinData>();
             int i = 0;
             while (i + 3 <= dna.Length)
             {
@@ -18,7 +19,7 @@ namespace PandemicShield.Worker.Services
 
                 if (aminoAcid == 'M')
                 {
-
+                    int startPosition = i;
                     StringBuilder stringBuilder = new StringBuilder();
                     stringBuilder.Append(aminoAcid);
                     i += 3;
@@ -37,7 +38,11 @@ namespace PandemicShield.Worker.Services
                         i += 3;
                         if (aminoAcidInProtein == '*')
                         {
-                            proteins.Add(stringBuilder.ToString());
+                            proteins.Add(new ProteinData
+                            (
+                                sequence: stringBuilder.ToString(),
+                                globalPosition: chunkGlobalOffset + startPosition
+                            ));
                             break;
                         }
                     }

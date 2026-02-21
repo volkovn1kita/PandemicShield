@@ -4,37 +4,10 @@ using System.Text;
 using PandemicShield.Contracts;
 using System.Text.Json;
 using PandemicShield.Worker.Services;
+using PandemicShield.Worker.Data;
 
 namespace PandemicShield.Worker
 {
-    public static class BiologyDictionary
-    {
-        // Словник трансляції кодонів ДНК в амінокислоти
-        public static readonly Dictionary<string, char> CodonTable = new Dictionary<string, char>
-    {
-        {"ATT", 'I'}, {"ATC", 'I'}, {"ATA", 'I'}, // Isoleucine
-        {"CTT", 'L'}, {"CTC", 'L'}, {"CTA", 'L'}, {"CTG", 'L'}, {"TTA", 'L'}, {"TTG", 'L'}, // Leucine
-        {"GTT", 'V'}, {"GTC", 'V'}, {"GTA", 'V'}, {"GTG", 'V'}, // Valine
-        {"TTT", 'F'}, {"TTC", 'F'}, // Phenylalanine
-        {"ATG", 'M'}, // Methionine (START)
-        {"TGT", 'C'}, {"TGC", 'C'}, // Cysteine
-        {"GCT", 'A'}, {"GCC", 'A'}, {"GCA", 'A'}, {"GCG", 'A'}, // Alanine
-        {"GGT", 'G'}, {"GGC", 'G'}, {"GGA", 'G'}, {"GGG", 'G'}, // Glycine
-        {"CCT", 'P'}, {"CCC", 'P'}, {"CCA", 'P'}, {"CCG", 'P'}, // Proline
-        {"ACT", 'T'}, {"ACC", 'T'}, {"ACA", 'T'}, {"ACG", 'T'}, // Threonine
-        {"TCT", 'S'}, {"TCC", 'S'}, {"TCA", 'S'}, {"TCG", 'S'}, {"AGT", 'S'}, {"AGC", 'S'}, // Serine
-        {"TAT", 'Y'}, {"TAC", 'Y'}, // Tyrosine
-        {"TGG", 'W'}, // Tryptophan
-        {"CAA", 'Q'}, {"CAG", 'Q'}, // Glutamine
-        {"AAT", 'N'}, {"AAC", 'N'}, // Asparagine
-        {"CAT", 'H'}, {"CAC", 'H'}, // Histidine
-        {"GAA", 'E'}, {"GAG", 'E'}, // Glutamic acid
-        {"GAT", 'D'}, {"GAC", 'D'}, // Aspartic acid
-        {"AAA", 'K'}, {"AAG", 'K'}, // Lysine
-        {"CGT", 'R'}, {"CGC", 'R'}, {"CGA", 'R'}, {"CGG", 'R'}, {"AGA", 'R'}, {"AGG", 'R'}, // Arginine
-        {"TAA", '*'}, {"TAG", '*'}, {"TGA", '*'}  // STOP кодони
-    };
-    }
     internal class Program
     {
         static async Task Main(string[] args)
@@ -71,11 +44,15 @@ namespace PandemicShield.Worker
                     throw new Exception("Cannot convert chunk");
                 }
 
-                var foundProteins = TranslationService.FindProteins(dnaChunkMessage.Sequence);
+                var foundProteins = TranslationService.FindProteins(dnaChunkMessage.Sequence, dnaChunkMessage.StartPosition);
 
-                foreach (string protein in foundProteins)
+                foreach (ProteinData protein in foundProteins)
                 {
-                    Console.WriteLine($"Protein {protein}");
+                    List<ThreatReport> reports = MutationScannerService.ScanProtein(protein);
+                    foreach (ThreatReport report in reports)
+                    {
+                        Console.WriteLine($"Назва - {report.ThreatName}\nПослідовність - {report.ProteinSequence}\nПозиція - {report.GlobalPosition}");
+                    }
                 }
 
                 await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);

@@ -18,7 +18,7 @@ namespace PandemicShield.Parser
             ConnectionFactory connectionFactory = new ConnectionFactory() { HostName = rabbitHost };
 
 
-            string filePath = "test.fasta";
+            string filePath = "sequence.fasta";
             try
             {
                 using var connection = await connectionFactory.CreateConnectionAsync();
@@ -34,8 +34,8 @@ namespace PandemicShield.Parser
                 using StreamReader sr = new StreamReader(filePath);
                 string? currentLine;
                 StringBuilder buffer = new StringBuilder();
-                int overlap = 30;
-                int chunkSize = 30000;
+                int overlap = 60;
+                int chunkSize = 60000;
 
                 int totalCharactersRead = 0;
 
