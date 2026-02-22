@@ -1,5 +1,5 @@
-﻿using PandemicShield.Aggregator.Data;
-using PandemicShield.Aggregator.Entities;
+﻿using PandemicShield.DataAccess.Data;
+using PandemicShield.DataAccess.Entities;
 using PandemicShield.Contracts;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

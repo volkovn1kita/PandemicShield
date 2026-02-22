@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using PandemicShield.Aggregator.Data;
+using PandemicShield.DataAccess.Data;
 
 #nullable disable
 
-namespace PandemicShield.Aggregator.Migrations
+namespace PandemicShield.DataAccess.Migrations
 {
     [DbContext(typeof(PandemicDbContext))]
-    partial class PandemicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260222190812_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace PandemicShield.Aggregator.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("PandemicShield.Aggregator.Entities.ThreatAlertEntity", b =>
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.ThreatAlertEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()

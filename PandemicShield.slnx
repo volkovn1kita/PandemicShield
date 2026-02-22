@@ -3,7 +3,9 @@
     <File Path="docker-compose.yaml" />
   </Folder>
   <Project Path="PandemicShield.Aggregator/PandemicShield.Aggregator.csproj" Id="d41e6fbc-32a3-4668-9141-3a4ee5016136" />
+  <Project Path="PandemicShield.Api/PandemicShield.Api.csproj" Id="4a80c82b-6823-4f8e-9fcb-d8424e749718" />
   <Project Path="PandemicShield.Contracts/PandemicShield.Contracts.csproj" />
+  <Project Path="PandemicShield.DataAccess/PandemicShield.DataAccess.csproj" Id="54d02951-24be-4267-8734-129676eb069c" />
   <Project Path="PandemicShield.Parser/PandemicShield.Parser.csproj" />
   <Project Path="PandemicShield.Worker/PandemicShield.Worker.csproj" />
 </Solution>

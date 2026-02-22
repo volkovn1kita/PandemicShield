@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PandemicShield.Aggregator.Entities
+namespace PandemicShield.DataAccess.Entities
 {
     public class ThreatAlertEntity
     {

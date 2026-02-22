@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using PandemicShield.Aggregator.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using PandemicShield.DataAccess.Entities;
 
-namespace PandemicShield.Aggregator.Data
+namespace PandemicShield.DataAccess.Data
 {
     public class PandemicDbContext : DbContext
     {

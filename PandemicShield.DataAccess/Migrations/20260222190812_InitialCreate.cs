@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace PandemicShield.Aggregator.Migrations
+namespace PandemicShield.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -19,6 +19,7 @@ namespace PandemicShield.Aggregator.Migrations
                     ThreatName = table.Column<string>(type: "text", nullable: false),
                     ProteinSequence = table.Column<string>(type: "text", nullable: false),
                     GlobalPosition = table.Column<int>(type: "integer", nullable: false),
+                    Category = table.Column<string>(type: "text", nullable: false),
                     DetectedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
