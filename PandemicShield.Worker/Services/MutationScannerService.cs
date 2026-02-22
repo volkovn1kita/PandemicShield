@@ -21,7 +21,8 @@ namespace PandemicShield.Worker.Services
                     (
                         threatName: ThreatDatabase.KnownMutations[threatSequence],
                         proteinSequence: protein.Sequence,
-                        globalPosition: protein.GlobalPosition + index * 3
+                        globalPosition: protein.GlobalPosition + index * 3,
+                        category: ThreatCategory.Virus
                     );
 
                     threatReports.Add(report);

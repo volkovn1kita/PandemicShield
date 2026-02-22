@@ -38,7 +38,8 @@ namespace PandemicShield.Aggregator
                     ThreatAlertEntity alertEntity = new ThreatAlertEntity(
                         threatName: report.ThreatName,
                         proteinSequence: report.ProteinSequence,
-                        globalPosition: report.GlobalPosition);
+                        globalPosition: report.GlobalPosition,
+                        category: report.Category);
 
                     using var dbContext = new PandemicDbContext();
                     dbContext.Threats.Add(alertEntity);

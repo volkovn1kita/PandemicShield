@@ -11,6 +11,10 @@ namespace PandemicShield.Aggregator.Data
     {
         public DbSet<ThreatAlertEntity> Threats { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ThreatAlertEntity>().Property(e => e.Category).HasConversion<string>();
+        }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string PostgreHost = Environment.GetEnvironmentVariable("POSTGRESDB_HOST") ?? "localhost";
