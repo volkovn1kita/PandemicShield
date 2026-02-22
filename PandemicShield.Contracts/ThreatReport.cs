@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PandemicShield.Worker.Data
+namespace PandemicShield.Contracts
 {
     public class ThreatReport
     {

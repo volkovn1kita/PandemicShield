@@ -5,3 +5,14 @@ services:
     ports:
       - "5672:5672"   # TCP порт для спілкування з C# кодом
       - "15672:15672" # HTTP порт для  адмін-панелі в браузері
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: pandemic_db
+    environment:
+      POSTGRES_USER: adminpostgres
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: pandemic_shield_db
+    ports:
+      - "5433:5432"
+  

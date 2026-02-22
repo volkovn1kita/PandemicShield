@@ -21,17 +21,20 @@ namespace PandemicShield.Worker
             using var channel = await connection.CreateChannelAsync();
 
             await channel.QueueDeclareAsync(
-                        queue: "dna_chunks",
-                        durable: false,
-                        exclusive: false,
-                        autoDelete: false
-            );
+                queue: "dna_chunks",
+                durable: false,
+                exclusive: false,
+                autoDelete: false);
+
+            await channel.QueueDeclareAsync(
+                queue: "threat_alerts",
+                durable: false,
+                autoDelete: false,
+                exclusive: false);
 
             await channel.BasicQosAsync(prefetchCount: 1, prefetchSize: 0, global: false);
             
             var consumer = new AsyncEventingBasicConsumer(channel);
-
-            byte[] targetMutationBytes = Encoding.UTF8.GetBytes("CCCC");
 
             consumer.ReceivedAsync += async (model, ea) =>
             {
@@ -49,9 +52,19 @@ namespace PandemicShield.Worker
                 foreach (ProteinData protein in foundProteins)
                 {
                     List<ThreatReport> reports = MutationScannerService.ScanProtein(protein);
-                    foreach (ThreatReport report in reports)
+                    
+                    if (reports != null)
                     {
-                        Console.WriteLine($"Назва - {report.ThreatName}\nПослідовність - {report.ProteinSequence}\nПозиція - {report.GlobalPosition}");
+                        foreach (ThreatReport report in reports)
+                        {
+                            var json = JsonSerializer.Serialize(report);
+                            byte[] reportBody = Encoding.UTF8.GetBytes(json);
+
+                            await channel.BasicPublishAsync(
+                                exchange: "",
+                                routingKey: "threat_alerts",
+                                body: reportBody);
+                        }
                     }
                 }
 

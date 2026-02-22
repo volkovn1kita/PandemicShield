@@ -2,6 +2,7 @@
   <Folder Name="/Solution Items/">
     <File Path="docker-compose.yaml" />
   </Folder>
+  <Project Path="PandemicShield.Aggregator/PandemicShield.Aggregator.csproj" Id="d41e6fbc-32a3-4668-9141-3a4ee5016136" />
   <Project Path="PandemicShield.Contracts/PandemicShield.Contracts.csproj" />
   <Project Path="PandemicShield.Parser/PandemicShield.Parser.csproj" />
   <Project Path="PandemicShield.Worker/PandemicShield.Worker.csproj" />
