@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PandemicShield.DataAccess\PandemicShield.DataAccess.csproj" />
+    <ProjectReference Include="..\PandemicShield.Parser\PandemicShield.Parser.csproj" />
   </ItemGroup>
 
 </Project>
