@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PandemicShield.DataAccess.Data;
+using PandemicShield.DataAccess.Entities;
 namespace PandemicShield.Api
 {
     public class Program
@@ -25,6 +26,19 @@ namespace PandemicShield.Api
                 return Results.Ok(threats);
             });
 
+            app.MapPost("/api/dictionary", async (ReferenceMutationEntity mutation, PandemicDbContext db) =>
+            {
+                db.Mutation.Add(mutation);
+                await db.SaveChangesAsync();
+                return Results.Ok();
+            });
+
+            app.MapGet("/api/dictionary", async (PandemicDbContext db) =>
+            {
+                var mutations = await db.Mutation.ToListAsync();
+                return Results.Ok(mutations);
+            });
+             
 
             app.Run();
         }

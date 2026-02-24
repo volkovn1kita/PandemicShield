@@ -9,8 +9,8 @@ namespace PandemicShield.Contracts
         public Guid ChunkId { get; set; } = Guid.NewGuid();
         public string Sequence { get; set; } = string.Empty;
         public int StartPosition { get; set; }
+        public ThreatCategory Category { get; set; }
         public bool IsLastChunk { get; set; } = false;
-
 
     }
 }

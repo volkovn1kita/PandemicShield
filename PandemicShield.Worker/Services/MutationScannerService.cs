@@ -8,21 +8,21 @@ namespace PandemicShield.Worker.Services
 {
     public class MutationScannerService
     {
-        public static List<ThreatReport> ScanProtein (ProteinData protein)
+        public static List<ThreatReport> ScanProtein (ProteinData protein, List<DiseaseMarker> diseases)
         {
             List<ThreatReport> threatReports = new List<ThreatReport>();
 
-            foreach (string threatSequence in ThreatDatabase.KnownMutations.Keys)
+            foreach (DiseaseMarker disease in diseases)
             {
-                int index = protein.Sequence.IndexOf(threatSequence);
+                int index = protein.Sequence.IndexOf(disease.Sequence);
                 if (index != -1)
                 {
                     ThreatReport report = new ThreatReport
                     (
-                        threatName: ThreatDatabase.KnownMutations[threatSequence],
+                        threatName: disease.Sequence,
                         proteinSequence: protein.Sequence,
                         globalPosition: protein.GlobalPosition + index * 3,
-                        category: ThreatCategory.Virus
+                        category: disease.Category
                     );
 
                     threatReports.Add(report);

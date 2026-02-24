@@ -10,6 +10,7 @@ namespace PandemicShield.DataAccess.Data
     public class PandemicDbContext : DbContext
     {
         public DbSet<ThreatAlertEntity> Threats { get; set; }
+        public DbSet<ReferenceMutationEntity> Mutation { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

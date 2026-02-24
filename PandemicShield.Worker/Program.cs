@@ -5,14 +5,29 @@ using PandemicShield.Contracts;
 using System.Text.Json;
 using PandemicShield.Worker.Services;
 using PandemicShield.Worker.Data;
+using System.Net.Http.Json;
 
 namespace PandemicShield.Worker
 {
     internal class Program
     {
+        private static readonly HttpClient client = new HttpClient();
+      
+        private static async Task<List<DiseaseMarker>> GetDiseaseAsync()
+        {
+            HttpResponseMessage response = await client.GetAsync("http://localhost:5020/api/dictionary");
+
+            response.EnsureSuccessStatusCode();
+
+            var dictionary = await response.Content.ReadFromJsonAsync<List<DiseaseMarker>>();
+            return dictionary ?? new List<DiseaseMarker>();
+        }
+
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            var diseases = await GetDiseaseAsync();
 
             string rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
 
@@ -48,10 +63,10 @@ namespace PandemicShield.Worker
                 }
 
                 var foundProteins = TranslationService.FindProteins(dnaChunkMessage.Sequence, dnaChunkMessage.StartPosition);
-
+                var relevantDiseases = diseases.Where(d => d.Category == dnaChunkMessage.Category).ToList();
                 foreach (ProteinData protein in foundProteins)
                 {
-                    List<ThreatReport> reports = MutationScannerService.ScanProtein(protein);
+                    List<ThreatReport> reports = MutationScannerService.ScanProtein(protein, relevantDiseases);
                     
                     if (reports != null)
                     {
