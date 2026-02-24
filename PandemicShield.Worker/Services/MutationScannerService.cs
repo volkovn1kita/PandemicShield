@@ -19,7 +19,7 @@ namespace PandemicShield.Worker.Services
                 {
                     ThreatReport report = new ThreatReport
                     (
-                        threatName: disease.Sequence,
+                        threatName: disease.Name,
                         proteinSequence: protein.Sequence,
                         globalPosition: protein.GlobalPosition + index * 3,
                         category: disease.Category

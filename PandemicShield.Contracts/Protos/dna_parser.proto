@@ -1,0 +1,21 @@
+﻿
+syntax = "proto3";
+
+option csharp_namespace = "PandemicShield.Contracts.Grpc";
+
+package pandemic;
+
+service DnaParserService{
+	rpc StreamDnaForParsing (stream DnaChunkRequest) returns (DnaProcessResponse);
+}
+
+message DnaChunkRequest {
+	bytes chunk_data = 1;
+	int32 category_id = 2;
+}
+
+message DnaProcessResponse {
+	bool success = 1;
+	string message = 2;
+	int32 chunk_processed = 3;
+}

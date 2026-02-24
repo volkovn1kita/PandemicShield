@@ -55,7 +55,8 @@ namespace PandemicShield.Parser
                         {
 
                             Sequence = buffer.ToString(0, chunkSize),
-                            StartPosition = totalCharactersRead
+                            StartPosition = totalCharactersRead,
+                            Category = ThreatCategory.Virus
                         };
 
                         var jsonToSend = JsonSerializer.Serialize(chunkMessage);
