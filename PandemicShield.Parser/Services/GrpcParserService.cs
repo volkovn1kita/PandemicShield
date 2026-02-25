@@ -53,6 +53,8 @@ namespace PandemicShield.Parser.Services
                     routingKey: "dna_chunks",
                     body: body);
 
+                await Task.Delay(2);
+
                 chunksProcessed++;
             }
 

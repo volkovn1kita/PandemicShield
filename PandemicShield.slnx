@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
     <File Path="docker-compose.yaml" />
   </Folder>
   <Project Path="PandemicShield.Aggregator/PandemicShield.Aggregator.csproj" Id="d41e6fbc-32a3-4668-9141-3a4ee5016136" />

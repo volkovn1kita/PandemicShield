@@ -20,7 +20,7 @@ namespace PandemicShield.Aggregator
 
             await channel.QueueDeclareAsync(
                 queue: "threat_alerts",
-                durable: false,
+                durable: true,
                 exclusive: false,
                 autoDelete: false);
 
@@ -52,7 +52,7 @@ namespace PandemicShield.Aggregator
 
             await channel.BasicConsumeAsync(queue: "threat_alerts", autoAck: false, consumer: consumer);
 
-            Console.ReadLine();
+            Thread.Sleep(Timeout.Infinite);
 
         }
     }

@@ -20,9 +20,11 @@ namespace PandemicShield.Api
 
             builder.Services.AddOpenApi();
 
+            var parserUrl = builder.Configuration["ParserUrl"] ?? "https://localhost:56627";
+
             builder.Services.AddGrpcClient<DnaParserService.DnaParserServiceClient>(o =>
             {
-                o.Address = new Uri("https://localhost:56627");
+                o.Address = new Uri(parserUrl);
             }).ConfigurePrimaryHttpMessageHandler(() =>
             {
                 var handler = new HttpClientHandler();
@@ -47,6 +49,8 @@ namespace PandemicShield.Api
             {
                 app.MapOpenApi();
             }
+
+            PandemicShield.Api.Extensions.DbSeeder.Seed();
 
             app.MapThreatEndpoints();
             app.MapDictionaryEndpoints();

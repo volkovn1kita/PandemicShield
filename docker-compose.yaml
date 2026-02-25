@@ -1,11 +1,15 @@
+version: '3.8'
+
 services:
+  # 1. Брокер повідомлень
   rabbitmq:
     image: rabbitmq:3-management
     container_name: pandemic_rabbitmq
     ports:
-      - "5672:5672"   # TCP порт для спілкування з C# кодом
-      - "15672:15672" # HTTP порт для  адмін-панелі в браузері
+      - "5672:5672"
+      - "15672:15672"
 
+  # 2. База даних
   postgres:
     image: postgres:15-alpine
     container_name: pandemic_db
@@ -15,4 +19,65 @@ services:
       POSTGRES_DB: pandemic_shield_db
     ports:
       - "5433:5432"
-  
+
+  # 3. Парсер (gRPC сервер)
+  parser:
+    build:
+      context: .
+      dockerfile: PandemicShield.Parser/Dockerfile
+    container_name: pandemic_parser
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080 
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+
+  # 4. Воркер (Аналізатор)
+  worker:
+    build:
+      context: .
+      dockerfile: PandemicShield.Worker/Dockerfile
+    container_name: pandemic_worker
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RABBITMQ_HOST=rabbitmq
+      - API_URL=http://api:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+    depends_on:
+      - rabbitmq
+      - postgres
+      - api
+
+  # 5. Агрегатор (Збереження результатів)
+  aggregator:
+    build:
+      context: .
+      dockerfile: PandemicShield.Aggregator/Dockerfile
+    container_name: pandemic_aggregator
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RABBITMQ_HOST=rabbitmq
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+    depends_on:
+      - rabbitmq
+      - postgres
+
+  # 6. Центр Керування (API)
+  api:
+    build:
+      context: .
+      dockerfile: PandemicShield.Api/Dockerfile
+    container_name: pandemic_api
+    ports:
+      - "5020:8080" # Відкриваємо порт 5020 назовні для Postman і Фронтенду
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ParserUrl=http://parser:8080 # Адреса Парсера у внутрішній мережі!
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+    depends_on:
+      - parser
+      - postgres

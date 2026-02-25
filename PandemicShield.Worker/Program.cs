@@ -15,7 +15,8 @@ namespace PandemicShield.Worker
       
         private static async Task<List<DiseaseMarker>> GetDiseaseAsync()
         {
-            HttpResponseMessage response = await client.GetAsync("http://localhost:5020/api/dictionary");
+            string apiUrl = Environment.GetEnvironmentVariable("API_URL") ?? "http://localhost:5020";
+            HttpResponseMessage response = await client.GetAsync($"{apiUrl}/api/dictionary");
 
             response.EnsureSuccessStatusCode();
 
@@ -43,7 +44,7 @@ namespace PandemicShield.Worker
 
             await channel.QueueDeclareAsync(
                 queue: "threat_alerts",
-                durable: false,
+                durable: true,
                 autoDelete: false,
                 exclusive: false);
 
@@ -89,9 +90,7 @@ namespace PandemicShield.Worker
 
             await channel.BasicConsumeAsync(queue: "dna_chunks", autoAck: false, consumer: consumer);
 
-            Console.ReadLine();
-
-
+            Thread.Sleep(Timeout.Infinite);
         }
     }
 }

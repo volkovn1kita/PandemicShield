@@ -16,11 +16,16 @@ namespace PandemicShield.DataAccess.Data
         {
             modelBuilder.Entity<ThreatAlertEntity>().Property(e => e.Category).HasConversion<string>();
         }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string PostgreHost = Environment.GetEnvironmentVariable("POSTGRESDB_HOST") ?? "localhost";
-            optionsBuilder.UseNpgsql($"Host={PostgreHost};Port=5433;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword");
-            base.OnConfiguring(optionsBuilder);
+            if (!optionsBuilder.IsConfigured)
+            {
+                var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                    ?? "Host=localhost;Port=5433;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword";
+
+                optionsBuilder.UseNpgsql(connectionString);
+            }
         }
     }
 }
