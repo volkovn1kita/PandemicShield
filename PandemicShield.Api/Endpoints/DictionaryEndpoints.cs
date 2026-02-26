@@ -21,8 +21,18 @@ namespace PandemicShield.Api.Endpoints
                 await db.SaveChangesAsync();
                 return Results.Ok();
             });
+
+            app.MapDelete("/api/dictionary/{id}", async (Guid id, PandemicDbContext db) =>
+            {
+                var mutation = await db.Mutation.FindAsync(id);
+                if (mutation == null) return Results.NotFound();
+
+                db.Mutation.Remove(mutation);
+                await db.SaveChangesAsync();
+                return Results.Ok();
+            });
+
         }
 
-      
     }
 }

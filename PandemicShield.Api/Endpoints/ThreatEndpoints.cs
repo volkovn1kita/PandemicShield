@@ -12,6 +12,17 @@ namespace PandemicShield.Api.Endpoints
                 var threats = await db.Threats.ToListAsync();
                 return Results.Ok(threats);
             });
+
+            app.MapDelete("/api/threats/{id}", async (Guid id, PandemicDbContext db) =>
+            {
+                var threat = await db.Threats.FindAsync(id);
+                if (threat == null) return Results.NotFound();
+
+                db.Threats.Remove(threat);
+                await db.SaveChangesAsync();
+                return Results.Ok();
+            });
+
         }
     }
 }
