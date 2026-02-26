@@ -367,7 +367,7 @@ class _AnalysisDashboardState extends State<AnalysisDashboard> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        const Text('SEQUENCE FILE (.fasta, .txt)', style: TextStyle(fontSize: 11, color: textMuted, letterSpacing: 1, fontWeight: FontWeight.bold)),
+                        const Text('SEQUENCE FILE (.fasta)', style: TextStyle(fontSize: 11, color: textMuted, letterSpacing: 1, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         InkWell(
                           onTap: _pickFile,
