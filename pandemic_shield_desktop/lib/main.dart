@@ -6,6 +6,7 @@ import 'pages/alerts_page.dart';
 import 'pages/genomes_page.dart';
 import 'pages/rules_page.dart';
 import 'pages/runs_page.dart';
+import 'pages/surveillance_page.dart';
 import 'store.dart';
 import 'theme.dart';
 
@@ -101,6 +102,7 @@ class _AppShellState extends State<AppShell> {
                   ),
                   AlertsPage(store: widget.store, onOpenRun: _openRun),
                   RulesPage(store: widget.store),
+                  SurveillancePage(store: widget.store, active: _page == 4, onOpenRun: _openRun),
                 ],
               ),
             ),
@@ -132,6 +134,8 @@ class _Sidebar extends StatelessWidget {
       ),
       (Icons.notifications_none, 'nav.alerts', store.alerts.length),
       (Icons.rule, 'nav.rules', store.variantRules.length + store.motifs.length),
+      // Нагляд за даними NCBI: лічильника немає, це не список об'єктів, а зведення.
+      (Icons.public, 'nav.surveillance', 0),
     ];
 
     return Container(

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PandemicShield.AmrFinder.Report;
 using PandemicShield.AmrFinder.Rules;
+using PandemicShield.AmrFinder.Surveillance;
 using PandemicShield.Bio.Variants;
 using PandemicShield.Contracts;
 using PandemicShield.DataAccess.Data;
@@ -44,6 +45,25 @@ namespace PandemicShield.AmrFinder
             };
 
             await channel.BasicConsumeAsync(queue: "amrfinder_jobs", autoAck: false, consumer: consumer);
+
+            // Нагляд (NCBI Pathogen Detection) — на окремому каналі: оновлення файлу на сотні мегабайт
+            // не повинно затримувати аналіз збірок. Каталог генів читається з бази AMRFinderPlus один раз.
+            var catalog = new Lazy<Task<AmrCatalog>>(async () => AmrCatalog.Load(await runner.DatabaseDirectoryAsync()));
+            var surveillance = new SurveillanceSync(new HttpClient { Timeout = TimeSpan.FromHours(2) }, () => catalog.Value);
+
+            using var surveillanceChannel = await connection.CreateChannelAsync();
+            await surveillanceChannel.QueueDeclareAsync(queue: "surveillance_jobs", durable: true, exclusive: false, autoDelete: false);
+            await surveillanceChannel.BasicQosAsync(prefetchCount: 1, prefetchSize: 0, global: false);
+
+            var surveillanceConsumer = new AsyncEventingBasicConsumer(surveillanceChannel);
+            surveillanceConsumer.ReceivedAsync += async (model, ea) =>
+            {
+                // Підтверджуємо одразу: перерване оновлення просто запускають ще раз (дані групи замінюються цілком).
+                await surveillanceChannel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
+                SurveillanceJobMessage? job = JsonSerializer.Deserialize<SurveillanceJobMessage>(ea.Body.Span);
+                if (job != null) await surveillance.RunAsync(job.SyncId);
+            };
+            await surveillanceChannel.BasicConsumeAsync(queue: "surveillance_jobs", autoAck: false, consumer: surveillanceConsumer);
 
             Console.WriteLine("Воркер AMRFinderPlus чекає на завдання...");
             Thread.Sleep(Timeout.Infinite);

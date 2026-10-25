@@ -1,0 +1,98 @@
+#node_id	parent_node_id	gene_symbol	hmm_id	hmm_tc1	hmm_tc2	blastrule_complete_ident	blastrule_complete_wp_coverage	blastrule_complete_br_coverage	blastrule_partial_ident	blastrule_partial_wp_coverage	blastrule_partial_br_coverage	reportable	type	subtype	class	subclass	family_name
+aac(3)-IIe	aac(3)-II	aac(3)-IIe	-	0.00	0.00	98.00	97.00	97.00	99.00	97.00	50.00	2	AMR	AMR	AMINOGLYCOSIDE	GENTAMICIN	aminoglycoside N-acetyltransferase AAC(3)-IIe
+aac(6')-Ib	aac(6')-set_A	aac(6')-Ib	NF033074.0	400.00	400.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	AMINOGLYCOSIDE	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-AGKT	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	AMIKACIN/GENTAMICIN/KANAMYCIN/TOBRAMYCIN	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-AKT	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	AMIKACIN/KANAMYCIN/TOBRAMYCIN	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-D181Y	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	AMIKACIN/KANAMYCIN/TOBRAMYCIN	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-G	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	GENTAMICIN	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-K	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	KANAMYCIN	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-KT	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	KANAMYCIN/TOBRAMYCIN	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-W104R	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	AMIKACIN/KANAMYCIN/TOBRAMYCIN	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aac(6')-Ib-generic	aac(6')-Ib	aac(6')-Ib	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	AMINOGLYCOSIDE	AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase
+aadA1	ant(3'')-Ia	aadA1	NF033126.1	587.00	587.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	STREPTOMYCIN	ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA1
+ant(2'')-Ia	ant(2'')	ant(2'')-Ia	NF000064.3	350.00	350.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	GENTAMICIN/KANAMYCIN/TOBRAMYCIN	aminoglycoside nucleotidyltransferase ANT(2'')-Ia
+aph(3'')-Ib	aph(3'')	aph(3'')-Ib	NF032895.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	STREPTOMYCIN	aminoglycoside O-phosphotransferase APH(3'')-Ib
+aph(3')-Ia	aph(3')-I	aph(3')-Ia	NF051474.1	625.00	625.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	KANAMYCIN	aminoglycoside O-phosphotransferase APH(3')-Ia
+aph(6)-Id	aph(6)-I	aph(6)-Id	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	AMINOGLYCOSIDE	STREPTOMYCIN	aminoglycoside O-phosphotransferase APH(6)-Id
+bla-D	bla	blaOXA	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	class D beta-lactamase
+bla-D-Gpos	blaOXA	blaOXA	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	BPU/BAT/BSU family class D beta-lactamase
+blaOXA	bla-D	blaOXA	NF012161.0	250.00	250.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	class D beta-lactamase
+blaOXA-1036_fam	blaOXA	blaOXA	NF040529.1	580.00	580.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-1036 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-1043_fam	blaOXA-PR	blaOXA	NF040600.1	525.00	525.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-1043 family class D beta-lactamase
+blaOXA-1089_fam	blaOXA	blaOXA	NF040804.1	580.00	580.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-1089 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-1091_fam	blaOXA	blaOXA	NF040803.1	570.00	570.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-1091 family oxacillin-hydrolyzing class D beta-lactamase
+blaOXA-10_fam	blaOXA	blaOXA	NF000386.2	580.00	580.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-10 family class D beta-lactamase
+blaOXA-114_fam	blaOXA-PR	blaOXA	NF033818.0	620.00	620.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-114 family class D beta-lactamase
+blaOXA-1206_fam	bla-D	blaOXA	NF041812.1	420.00	420.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-1206 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-1238_fam	blaOXA-PR	blaOXA	NF045807.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-1238 family class D beta-lactamase
+blaOXA-1258_fam	blaOXA	blaOXA	NF047460.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-1258 family class D beta-lactamase
+blaOXA-12_fam	blaOXA-PR	blaOXA	NF033702.0	595.00	595.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-12 family class D beta-lactamase
+blaOXA-1327_fam	bla-D	blaOXA	NF047782.1	590.00	590.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-1327 family class D beta-lactamase
+blaOXA-134_fam	blaOXA	blaOXA	NF000436.2	570.00	570.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-134 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-143_fam	blaOXA	blaOXA	NF000464.2	610.00	610.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-143 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-184_fam	blaOXA_Campy	blaOXA	NF000461.2	475.00	475.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-184 family class D beta-lactamase
+blaOXA-18_fam	blaOXA-PR	blaOXA	NF045839.1	540.00	540.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CEPHALOSPORIN	OXA-18 family class D beta-lactamase
+blaOXA-198_fam	blaOXA	blaOXA	NF040806.1	515.00	515.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-198 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-1_fam	blaOXA	blaOXA	NF000388.2	580.00	580.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-1 family class D beta-lactamase
+blaOXA-20_fam	blaOXA	blaOXA	NF052298.1	585.00	585.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-20 family oxacillin-hydrolyzing class D beta-lactamase
+blaOXA-211_fam	blaOXA	blaOXA	NF000417.2	575.00	575.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-211 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-213_fam	blaOXA	blaOXA	NF000269.2	560.00	560.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-213 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-214_fam	blaOXA	blaOXA	NF000418.2	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-214 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-229_fam	blaOXA	blaOXA	NF000501.2	625.00	625.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-229 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-22_fam	blaOXA-PR	blaOXA	NF033509.1	575.00	575.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-22 family class D beta-lactamase
+blaOXA-23_fam	blaOXA	blaOXA	NF000266.2	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-23 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-24_fam	blaOXA	blaOXA	NF000434.2	615.00	615.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-24 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-258_fam	blaOXA-PR	blaOXA	NF045795.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-258 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-266_fam	blaOXA	blaOXA	NF033653.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-266 family class D beta-lactamase
+blaOXA-274_fam	blaOXA	blaOXA	NF033648.1	625.00	625.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-274 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-286_fam	blaOXA	blaOXA	NF000520.2	570.00	570.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-286 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-294_fam	blaOXA	blaOXA	NF038386.1	580.00	580.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-294 family class D beta-lactamase
+blaOXA-2_fam	blaOXA	blaOXA	NF000267.2	590.00	590.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-2 family class D beta-lactamase
+blaOXA-364_fam	blaOXA-PR	blaOXA	NF033815.0	625.00	625.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-364 family class D beta-lactamase
+blaOXA-372_fam	blaOXA	blaOXA	NF000415.3	535.00	535.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-372 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-427_fam	blaOXA-PR	blaOXA	NF038217.2	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-427 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-42_fam	blaOXA-PR	blaOXA	NF040531.1	540.00	540.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-42 family class D beta-lactamase
+blaOXA-46_fam	blaOXA	blaOXA	NF033104.0	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-46 family oxacillin-hydrolyzing class D beta-lactamase
+blaOXA-48_fam	blaOXA	blaOXA	NF000387.2	580.00	580.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-48 family class D beta-lactamase
+blaOXA-493_fam	blaOXA_Campy	blaOXA	NF000462.2	475.00	475.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-493 family class D beta-lactamase
+blaOXA-50-var	blaOXA	blaOXA	NF047495.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-50-var family class D beta-lactamase
+blaOXA-50_fam	blaOXA	blaOXA	NF000432.2	580.00	580.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-50 family oxacillin-hydrolyzing class D beta-lactamase
+blaOXA-51_fam	blaOXA	blaOXA	NF000268.2	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-51 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-542_fam	blaOXA	blaOXA	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-542 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-548_fam	blaOXA	blaOXA	NF040530.1	620.00	620.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-548 family class D beta-lactamase
+blaOXA-55_fam	blaOXA	blaOXA	NF033667.1	550.00	550.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-55 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-576_fam	blaOXA_Campy	blaOXA	NF033613.1	530.00	530.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-576 family class D beta-lactamase
+blaOXA-58_fam	blaOXA	blaOXA	NF000500.2	625.00	625.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-58 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-5_fam	blaOXA	blaOXA	NF040527.2	574.00	574.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-5 family class D beta-lactamase
+blaOXA-60_fam	blaOXA	blaOXA	NF000395.3	550.00	550.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-60 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-61_fam	blaOXA_Campy	blaOXA	NF000435.2	540.00	540.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-61 family class D beta-lactamase
+blaOXA-62_fam	blaOXA	blaOXA	NF000430.2	560.00	560.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-62 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-63_fam	blaOXA	blaOXA	NF000429.2	560.00	560.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-63 family oxacillin-hydrolyzing class D beta-lactamase
+blaOXA-679_fam	blaOXA	blaOXA	NF038333.1	570.00	570.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-679 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA-727_fam	blaOXA	blaOXA	NF033666.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-727 family class D beta-lactamase
+blaOXA-732_fam	blaOXA	blaOXA	NF040805.1	585.00	585.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-732 family class D beta-lactamase
+blaOXA-837_fam	blaOXA	blaOXA	NF042983.1	575.00	575.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-837 family class D beta-lactamase
+blaOXA-85_fam	blaOXA	blaOXA	NF000502.2	550.00	500.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-85 family oxacillin-hydrolyzing class D beta-lactamase
+blaOXA-919_fam	blaOXA-PR	blaOXA	NF038183.1	575.00	575.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-919 family class D beta-lactamase
+blaOXA-9_fam	blaOXA-PR	blaOXA	NF040532.1	575.00	575.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	OXA-9 family oxacillin-hydrolyzing class D beta-lactamase
+blaOXA-PR	bla-D	blaOXA	NF000270.1	280.00	280.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	class D beta-lactamase
+blaOXA-VL06	bla-D	blaOXA	NF040784.1	400.00	400.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	CARBAPENEM	OXA-1090 family carbapenem-hydrolyzing class D beta-lactamase
+blaOXA_Campy	blaOXA	blaOXA	NF000463.2	390.00	390.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	BETA-LACTAM	BETA-LACTAM	class D beta-lactamase
+catA1	catA	catA1	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	PHENICOL	CHLORAMPHENICOL	type A-1 chloramphenicol O-acetyltransferase
+catA2	catA	catA2	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	PHENICOL	CHLORAMPHENICOL	type A-2 chloramphenicol O-acetyltransferase CatII
+catB3	catB	catB3	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	PHENICOL	CHLORAMPHENICOL	type B-3 chloramphenicol O-acetyltransferase CatB3
+cmlA5	cmlA	cmlA5	-	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	PHENICOL	CHLORAMPHENICOL	chloramphenicol efflux MFS transporter CmlA5
+dfrA14	dfrA	dfrA14	-	0.00	0.00	98.00	90.00	90.00	98.00	90.00	90.00	2	AMR	AMR	TRIMETHOPRIM	TRIMETHOPRIM	trimethoprim-resistant dihydrofolate reductase DfrA14
+dfrA4	dfr_gen	dfrA4	-	0.00	0.00	90.00	90.00	90.00	95.00	90.00	25.00	2	AMR	AMR	TRIMETHOPRIM	TRIMETHOPRIM	trimethoprim-resistant dihydrofolate reductase DfrA4
+emrD	MFS_efflux	emrD	-	0.00	0.00	94.00	90.00	90.00	96.00	90.00	25.00	1	AMR	AMR	EFFLUX	EFFLUX	multidrug efflux MFS transporter EmrD
+fosA5_fam	fosA_gen	fosA	NF040540.1	310.00	310.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	FOSFOMYCIN	FOSFOMYCIN	FosA5 family fosfomycin resistance glutathione transferase
+fosA_PA1129	fos_GT	fosA	NF000094.1	275.00	275.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	FOSFOMYCIN	FOSFOMYCIN	FosA family fosfomycin resistance glutathione transferase
+fosA_gen	fos_GT	fosA	NF000221.4	250.00	250.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	FOSFOMYCIN	FOSFOMYCIN	FosA family fosfomycin resistance glutathione transferase
+fos_A3_A4	fosA_gen	fosA	NF000075.1	275.00	275.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	FOSFOMYCIN	FOSFOMYCIN	FosA3/FosA4 family fosfomycin resistance glutathione transferase
+fos_A_A2	fosA_gen	fosA	NF000026.1	275.00	275.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	FOSFOMYCIN	FOSFOMYCIN	FosA/FosA2 family fosfomycin resistance glutathione transferase
+oqxA	RND-peri	oqxA	NF000272.2	835.00	835.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	NITROFURAN/PHENICOL/QUINOLONE/TETRACYCLINE	NITROFURANTOIN/PHENICOL/QUINOLONE/TIGECYCLINE	multidrug efflux RND transporter periplasmic adaptor subunit OqxA
+oqxB	RND-IM	oqxB	NF000037.1	2200.00	2200.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	NITROFURAN/PHENICOL/QUINOLONE/TETRACYCLINE	NITROFURANTOIN/PHENICOL/QUINOLONE/TIGECYCLINE	multidrug efflux RND transporter permease subunit OqxB
+sul1	sul	sul1	NF000294.1	600.00	600.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	SULFONAMIDE	SULFONAMIDE	sulfonamide-resistant dihydropteroate synthase Sul1
+sul2	sul	sul2	NF000295.1	575.00	575.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	SULFONAMIDE	SULFONAMIDE	sulfonamide-resistant dihydropteroate synthase Sul2
+tet(A)	tet_A_B_C_D	tet(A)	NF012193.0	840.00	840.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	TETRACYCLINE	TETRACYCLINE	tetracycline efflux MFS transporter Tet(A)
+tet(D)	tet_A_B_C_D	tet(D)	NF012186.0	775.00	775.00	0.00	0.00	0.00	0.00	0.00	0.00	2	AMR	AMR	TETRACYCLINE	TETRACYCLINE	tetracycline efflux MFS transporter Tet(D)

@@ -13,6 +13,9 @@ namespace PandemicShield.DataAccess.Data
         public DbSet<VariantMarkerEntity> VariantMarkers { get; set; }
         public DbSet<AmrHitEntity> AmrHits { get; set; }
         public DbSet<ImportBatchEntity> Imports { get; set; }
+        public DbSet<SurveillanceSyncEntity> SurveillanceSyncs { get; set; }
+        public DbSet<SurveillanceIsolateEntity> SurveillanceIsolates { get; set; }
+        public DbSet<SurveillanceGeneEntity> SurveillanceGenes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,6 +41,17 @@ namespace PandemicShield.DataAccess.Data
 
             modelBuilder.Entity<ImportBatchEntity>().Property(e => e.Category).HasConversion<string>();
             modelBuilder.Entity<ImportBatchEntity>().Property(e => e.Status).HasConversion<string>();
+
+            modelBuilder.Entity<SurveillanceSyncEntity>().Property(e => e.Status).HasConversion<string>();
+            modelBuilder.Entity<SurveillanceIsolateEntity>().HasIndex(e => new { e.Taxgroup, e.Country });
+            modelBuilder.Entity<SurveillanceIsolateEntity>().HasIndex(e => e.AssemblyAccession);
+            modelBuilder.Entity<SurveillanceGeneEntity>().HasIndex(e => e.IsolateId);
+            modelBuilder.Entity<SurveillanceGeneEntity>().HasIndex(e => e.Family);
+            modelBuilder.Entity<SurveillanceGeneEntity>()
+                .HasOne<SurveillanceIsolateEntity>()
+                .WithMany()
+                .HasForeignKey(e => e.IsolateId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AmrHitEntity>().HasIndex(e => e.RunId);
             modelBuilder.Entity<AmrHitEntity>().HasIndex(e => e.ElementSymbol);

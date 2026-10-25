@@ -371,6 +371,157 @@ namespace PandemicShield.DataAccess.Migrations
                     b.ToTable("SequenceResults");
                 });
 
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.SurveillanceGeneEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Class")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Family")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("IsolateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Qualifier")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subclass")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Family");
+
+                    b.HasIndex("IsolateId");
+
+                    b.ToTable("SurveillanceGenes");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.SurveillanceIsolateEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AmrFinderVersion")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AmrGeneCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AmrGenotypes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AssemblyAccession")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BioSample")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CollectionDate")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("CollectionYear")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DatabaseVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Host")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IsolationSource")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Organism")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PdgVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Region")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Strain")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TargetAccession")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Taxgroup")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssemblyAccession");
+
+                    b.HasIndex("Taxgroup", "Country");
+
+                    b.ToTable("SurveillanceIsolates");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.SurveillanceSyncEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("BytesRead")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BytesTotal")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Countries")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IsolatesStored")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PdgVersion")
+                        .HasColumnType("text");
+
+                    b.Property<int>("RowsScanned")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Taxgroup")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SurveillanceSyncs");
+                });
+
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.ThreatAlertEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -490,6 +641,15 @@ namespace PandemicShield.DataAccess.Migrations
                     b.HasOne("PandemicShield.DataAccess.Entities.AnalysisRunEntity", null)
                         .WithMany()
                         .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.SurveillanceGeneEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.SurveillanceIsolateEntity", null)
+                        .WithMany()
+                        .HasForeignKey("IsolateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

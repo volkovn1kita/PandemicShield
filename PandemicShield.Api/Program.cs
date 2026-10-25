@@ -68,6 +68,7 @@ namespace PandemicShield.Api
             app.MapNextcladeEndpoints();
             app.MapAmrEndpoints();
             app.MapImportEndpoints();
+            app.MapSurveillanceEndpoints();
 
             app.Run();
         }

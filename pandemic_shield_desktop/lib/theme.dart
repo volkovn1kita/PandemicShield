@@ -23,6 +23,11 @@ class Palette extends ThemeExtension<Palette> {
   final Color danger;
   final Color warning;
   final Color success;
+
+  /// Графіки нагляду: «тривожна» частина (карбапенемази) і решта. Пару перевірено на розрізнення
+  /// при дальтонізмі (ΔE ≥ 14); сірий — фон, а не категорія, тож поруч завжди є легенда, підписи й таблиця.
+  final Color chartAlert;
+  final Color chartRest;
   final Brightness brightness;
 
   const Palette({
@@ -40,6 +45,8 @@ class Palette extends ThemeExtension<Palette> {
     required this.danger,
     required this.warning,
     required this.success,
+    required this.chartAlert,
+    required this.chartRest,
     required this.brightness,
   });
 
@@ -58,6 +65,8 @@ class Palette extends ThemeExtension<Palette> {
     danger: Color(0xFFD93636),
     warning: Color(0xFFC27C0E),
     success: Color(0xFF2F8A4C),
+    chartAlert: Color(0xFFD93636),
+    chartRest: Color(0xFFC9C7C2),
     brightness: Brightness.light,
   );
 
@@ -76,6 +85,8 @@ class Palette extends ThemeExtension<Palette> {
     danger: Color(0xFFF06A6A),
     warning: Color(0xFFE0A23B),
     success: Color(0xFF5BB57A),
+    chartAlert: Color(0xFFE35D5D),
+    chartRest: Color(0xFF4A4A48),
     brightness: Brightness.dark,
   );
 

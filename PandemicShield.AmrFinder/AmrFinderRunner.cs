@@ -32,6 +32,16 @@ namespace PandemicShield.AmrFinder
             return match.Success ? match.Groups[1].Value.Trim() : null;
         }
 
+        /// <summary>Тека бази даних (там каталог генів для класифікації даних нагляду).</summary>
+        public async Task<string> DatabaseDirectoryAsync()
+        {
+            var (_, output) = await RunAsync(["-V"]);
+            var match = DatabaseDirectoryRegex().Match(output);
+            return match.Success
+                ? match.Groups[1].Value
+                : throw new InvalidOperationException($"AMRFinderPlus не повідомив теку бази: {Tail(output)}");
+        }
+
         /// <summary>Аналізує нуклеотидну збірку (контиги FASTA) і повертає шлях до звіту TSV.</summary>
         public async Task<string> RunAsync(string fastaPath, string? organism, string outputDir)
         {
@@ -74,5 +84,8 @@ namespace PandemicShield.AmrFinder
 
         [GeneratedRegex(@"Database version:\s*(\S+)")]
         private static partial Regex DatabaseVersionRegex();
+
+        [GeneratedRegex(@"Database directory:\s*'([^']+)'")]
+        private static partial Regex DatabaseDirectoryRegex();
     }
 }

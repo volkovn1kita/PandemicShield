@@ -1,0 +1,5 @@
+#taxgroup	accession_version	mutation_position	standard_mutation_symbol	reported_mutation_symbol	class	subclass	mutated_protein_name
+Vibrio_cholerae	WP_001281183.1	83	gyrA_S83I	gyrA_S83I	QUINOLONE	QUINOLONE	Vibrio_cholerae_quinolone_resistant_GyrA
+Salmonella	WP_001281271.1	83	gyrA_S83Y	gyrA_S83Y	QUINOLONE	QUINOLONE	Salmonella_quinolone_resistant_GyrA
+Escherichia	WP_001281881.1	80	parC_S80I	parC_S80I	QUINOLONE	QUINOLONE	Escherichia_quinolone_resistant_ParC
+Klebsiella_pneumoniae	WP_002913005.1	135	ompK36_D135DGD	ompK36_D135DGD	BETA-LACTAM	CARBAPENEM	Klebsiella_pneumoniae_carbapenem_resistant_OmpK36
