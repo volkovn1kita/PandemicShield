@@ -176,6 +176,8 @@ services:
       - DATA_DIR=/data
       # Набори даних Nextclade, встановлені в образі воркера (див. PandemicShield.Nextclade/Dockerfile)
       - NEXTCLADE_DATASETS=nextstrain/sars-cov-2/wuhan-hu-1/orfs,nextstrain/flu/h1n1pdm/ha/CY121680,nextstrain/flu/h3n2/ha/EPI1857216,nextstrain/rsv/a/EPI_ISL_412866,nextstrain/rsv/b/EPI_ISL_1653999,nextstrain/mpox/all-clades
+      # Необов'язковий ключ NCBI для імпорту: 10 запитів на секунду замість 3 (https://account.ncbi.nlm.nih.gov/settings/)
+      - NCBI_API_KEY=${NCBI_API_KEY:-}
     volumes:
       - run_data:/data
     depends_on:

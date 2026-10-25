@@ -6,7 +6,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql)
 
-**Pandemic Shield** is an event-driven, self-hosted platform for viral genomic surveillance. Upload `.fasta` genomes and it runs [Nextclade](https://docs.nextstrain.org/projects/nextclade/) offline to assign clades and Pango lineages, check sequence quality and call every mutation; it keeps the history of your samples, lets you search a mutation across all of them and raises alerts on the variants you define (e.g. `S:E484K`, `clade:Delta`, `lineage:BA.2.86*`). For bacterial genome assemblies it runs [NCBI AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/) offline to find antimicrobial resistance genes and point mutations (e.g. carbapenemases such as NDM and OXA-48) and summarises the predicted resistance per antibiotic group. A built-in ORF scanner (6 reading frames, exact protein motifs) remains as a learning mode. The desktop app speaks Ukrainian and English.
+**Pandemic Shield** is an event-driven, self-hosted platform for viral genomic surveillance. Upload `.fasta` genomes and it runs [Nextclade](https://docs.nextstrain.org/projects/nextclade/) offline to assign clades and Pango lineages, check sequence quality and call every mutation; it keeps the history of your samples, lets you search a mutation across all of them and raises alerts on the variants you define (e.g. `S:E484K`, `clade:Delta`, `lineage:BA.2.86*`). For bacterial genome assemblies it runs [NCBI AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/) offline to find antimicrobial resistance genes and point mutations (e.g. carbapenemases such as NDM and OXA-48) and summarises the predicted resistance per antibiotic group, and types the strain with MLST (e.g. *K. pneumoniae* ST147). Open NCBI data is a first-class input: import up to 500 accessions or an NCBI Datasets archive at once, and follow antimicrobial resistance in Ukraine on a dashboard built from NCBI Pathogen Detection. Every sample can be exported as a PDF or CSV report. A built-in ORF scanner (6 reading frames, exact protein motifs) remains as a learning mode. The desktop app speaks Ukrainian and English.
 
 ---
 
@@ -59,6 +59,9 @@ This project implements a highly scalable pipeline to process gigabytes of data 
 * **Nextclade worker (`PandemicShield.Nextclade`):** Consumes `nextclade_jobs`, runs the Nextclade CLI offline against datasets baked into its image (SARS-CoV-2, influenza H1N1pdm/H3N2 HA, RSV-A/B, mpox), stores per-genome clade, lineage, QC and mutations, and evaluates variant rules into alerts.
 * **AMRFinderPlus worker (`PandemicShield.AmrFinder`):** Consumes `amrfinder_jobs`, runs NCBI AMRFinderPlus 4.2.7 inside the official `ncbi/amr` image (database bundled, offline), stores resistance/stress/virulence findings and evaluates gene/class rules into alerts.
 * **Bio library (`PandemicShield.Bio`):** Dependency-free biological core: streaming FASTA reader, IUPAC nucleotides, NCBI genetic code tables, overlapping windows, 6-frame ORF finder, protein motif scanner. Covered by golden tests on the SARS-CoV-2 reference genome.
+* **MLST worker (`PandemicShield.Mlst`):** Consumes `mlst_jobs`, runs Torsten Seemann's `mlst` inside `staphb/mlst:2.35.0` (PubMLST schemes bundled, offline) and alerts on high-risk clones (`st:klebsiella/147`).
+* **NCBI import (in the API):** A hosted service consumes `import_jobs` and turns accession lists (E-utilities, Datasets API v2) or Datasets ZIPs into ordinary runs.
+* **Surveillance (in the AMRFinderPlus worker):** Streams NCBI Pathogen Detection `amr.metadata.tsv` files (up to ~830 MB), keeps isolates from the chosen countries and classifies their genes with the AMRFinderPlus database.
 * **Worker Service (.NET Worker):** Subscribes to RabbitMQ and runs the Bio library on each window (`MutationScannerService`).
 * **Aggregator/DB Context:** EF Core implementation over PostgreSQL to store dictionaries and threat logs.
 * **Frontend (Flutter Desktop):** A modern, clinical-themed desktop app with background auto-polling for real-time result synchronization.
@@ -72,7 +75,11 @@ This project implements a highly scalable pipeline to process gigabytes of data 
 * **Nextclade analysis:** Clade, Pango lineage, QC and all mutations per genome, with dataset version stored for reproducibility; re-run any stored sample with a newer dataset or new rules.
 * **Variant rules:** `S:N501Y`, `S:E484` (any change), `S:F157-`, `A23403G`, `clade:Delta`, `lineage:BA.2.86*` (with descendants through Pango aliases).
 * **Bacterial resistance (AMRFinderPlus):** resistance genes and species-specific point mutations, predicted resistance per antibiotic group, rules such as `subclass:CARBAPENEM` or `gene:blaKPC*`.
-* **Cross-sample search:** which genomes in all runs carry `S:E484K`? Which isolates carry `blaNDM`?
+* **Cross-sample search:** which genomes in all runs carry `S:E484K`? Which isolates carry `blaNDM`? Which are ST147?
+* **Bulk import of open NCBI data:** up to 500 accessions (`OQ291490.1`, `GCA_009887825.1`) or an NCBI Datasets / NCBI Virus ZIP. Viral sequences become one run; every bacterial assembly becomes its own run with the species taken from NCBI metadata.
+* **AMR surveillance dashboard:** NCBI Pathogen Detection for a bacterial group and country (Ukraine by default): isolates per year with and without carbapenemases, carbapenemase families, gene × year heatmap, regions, sources, and one click to import and analyse any isolate yourself.
+* **MLST sequence typing:** ST, PubMLST scheme and allele profile for every bacterial run; rules such as `st:klebsiella/147`.
+* **Sample reports:** PDF (Ukrainian / English, with database versions for reproducibility) and CSV (stable columns for spreadsheets and scripts).
 * **Desktop UI:** Ukrainian / English, light / dark theme, bundled IBM Plex fonts, per-genome mutation bars and genome map.
 * **Genomic coordinates:** Findings are reported as `record:start-end (strand)`, 1-based like NCBI/GenBank, and linked to an analysis run (sample).
 * **Live Sync UI:** Flutter desktop app automatically polls and renders detected threats in real-time without locking the UI thread.
@@ -105,7 +112,7 @@ This project implements a highly scalable pipeline to process gigabytes of data 
 
 ### Running the tests
 ```bash
-dotnet test PandemicShield.slnx   # Bio core, Nextclade and AMRFinderPlus result parsing and rule matching (101 tests)
+dotnet test PandemicShield.slnx   # Bio core, Nextclade, AMRFinderPlus, MLST, NCBI import, surveillance and reports (156 tests)
 ```
 
 ### Running the Frontend
@@ -151,6 +158,7 @@ The unmodified reference (`PandemicShield.Bio.Tests/Data/MN908947.fasta`) gives 
 * [`docs/DIRECTION.md`](docs/DIRECTION.md): where the project should go next and why.
 * [`docs/STAGE2_NEXTCLADE.md`](docs/STAGE2_NEXTCLADE.md): Nextclade integration, variant rules and the new UI: what and why.
 * [`docs/STAGE3_AMR.md`](docs/STAGE3_AMR.md): bacterial antimicrobial resistance with AMRFinderPlus: what and why.
+* [`docs/STAGE4_DATA.md`](docs/STAGE4_DATA.md): NCBI import, AMR surveillance dashboard, MLST and sample reports: what and why.
 * [`docs/DESIGN.md`](docs/DESIGN.md): the design system behind the desktop UI.
 
 ---
@@ -163,4 +171,6 @@ The unmodified reference (`PandemicShield.Bio.Tests/Data/MN908947.fasta`) gives 
 * **Very long ORFs at window boundaries.** ORFs longer than the window flank (`WINDOW_FLANK_SIZE`, 32 768 nt by default) that cross a window boundary are not reported.
 * **Gene ≠ phenotype.** AMRFinderPlus predicts resistance from genes and mutations; clinical decisions need a lab susceptibility test. Bacterial input must be an assembly (contigs), not raw reads.
 * **Input is consensus FASTA only.** FASTQ/BAM/VCF are not supported yet; FASTA cannot express diploid genotypes or mixed samples (wastewater needs Freyja).
+* **Surveillance data is what labs chose to publish.** NCBI Pathogen Detection is not a representative sample of a country; the dashboard says so under the charts.
+* **No CI yet.** Tests and image builds run by hand; GitHub Actions is the first item of the roadmap.
 * **WebSockets/SignalR:** The UI still polls the visible page every 3 seconds; real-time progress via SignalR is planned.

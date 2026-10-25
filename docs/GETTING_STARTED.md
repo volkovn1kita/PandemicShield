@@ -11,7 +11,7 @@
 
 | Що | Навіщо | Примітки |
 |---|---|---|
-| **Docker Desktop** (Windows/macOS) або Docker Engine + Compose (Linux) | Бекенд: 8 контейнерів | Виділіть Docker'у ≥ 6 ГБ RAM і ~10 ГБ диску |
+| **Docker Desktop** (Windows/macOS) або Docker Engine + Compose (Linux) | Бекенд: 9 контейнерів | Виділіть Docker'у ≥ 6 ГБ RAM і ~10 ГБ диску |
 | **Flutter SDK** 3.38+ (Dart 3.10+) | Desktop-застосунок | `flutter doctor` підкаже, чого бракує |
 | Windows: Visual Studio 2022 з «Desktop development with C++» | Збірка під Windows | Не VS Code, а саме Visual Studio |
 | macOS: Xcode | Збірка під macOS | |
@@ -23,7 +23,6 @@
 ```bash
 git clone https://github.com/volkovn1kita/PandemicShield.git
 cd PandemicShield
-git checkout claude/optimistic-knuth-d392b9   # гілка з етапами 1–3
 
 # Якщо колись уже запускали стару версію: прибрати старі контейнери і базу,
 # бо схема бази змінилася (тепер вона створюється міграціями).
@@ -33,7 +32,8 @@ docker compose up --build -d
 ```
 
 Перша збірка триває 10–20 хв: завантажуються образи .NET, `nextstrain/nextclade` з наборами даних
-(SARS-CoV-2, грип, RSV, mpox) і `ncbi/amr` з базою генів резистентності. Наступні запуски — секунди.
+(SARS-CoV-2, грип, RSV, mpox), `ncbi/amr` з базою генів резистентності і `staphb/mlst` зі схемами PubMLST.
+Наступні запуски — секунди.
 
 Перевірити, що бекенд живий:
 
@@ -62,6 +62,19 @@ flutter run -d windows    # або -d macos, -d linux
 | `PandemicShield.AmrFinder.Tests/Data/amrfinder-test-contigs.fasta` | Бактерія, *Escherichia* | Колістин (`pmrB_C84R`), ванкоміцин (`vanG`), шига-токсини |
 | `PandemicShield.Bio.Tests/Data/MN908947.fasta` | Пошук мотивів (ORF) | Референсний геном SARS-CoV-2, навчальний режим |
 
+### Без власних файлів: відкриті дані NCBI
+
+1. **Нагляд AMR** → «Оновити з NCBI» (група *Klebsiella*, країна Ukraine). За хвилину-дві: ~240 українських ізолятів,
+   які карбапенемази в них трапляються, за роками й регіонами.
+2. У таблиці ізолятів унизу — «Аналізувати» біля будь-якого: збірка імпортується з NCBI, і PandemicShield сам проганяє
+   AMRFinderPlus та MLST (тип штаму). Наприклад, `GCA_059491835.1` — гіпервірулентний ST23 з NDM-1 і OXA-48.
+3. Або **Запуски** → «Імпорт з NCBI»: до 500 номерів одразу (`OQ291490.1 MN908947.3` для вірусів, `GCA_009887825.1` для бактерій)
+   чи ZIP-архів, завантажений з NCBI Virus / NCBI Datasets.
+4. На сторінці запуску — «Звіт»: PDF, щоб передати результат, або CSV для Excel чи скриптів.
+
+Імпорт і нагляд — єдині кроки, яким потрібен інтернет; аналіз далі працює офлайн. З ключем NCBI
+(`NCBI_API_KEY=… docker compose up -d`) імпорт утричі швидший.
+
 ### Якщо щось не так
 
 | Симптом | Причина й рішення |
@@ -72,14 +85,14 @@ flutter run -d windows    # або -d macos, -d linux
 | Порт 5020/5433/5672 зайнятий | Змініть ліву частину `ports:` у `docker-compose.yaml`, а для 5020 — ще й `baseUrl` у `lib/api.dart` |
 | Подивитися черги | RabbitMQ UI: http://localhost:15672 (guest / guest) |
 
-> **Чесно про перевірку.** Усі сервіси й обидва аналізатори прогнані наскрізно в Linux-середовищі
-> розробки, але самі Docker-образи там не збиралися (Docker був недоступний). Якщо `docker compose build`
-> впаде — це перше, що треба полагодити, і саме тому CI зі збіркою образів стоїть першим у плані.
+> **Перевірка.** Усі 9 образів зібрано й прогнано наскрізно в Docker Desktop на Windows: холодний старт
+> (`docker compose down -v`, потім `up`) піднімає все без ручного втручання, бо сервіси чекають на готовність
+> Postgres і RabbitMQ. Автоматичної збірки на кожен push (CI) поки немає — це перший пункт плану.
 
 ### Тести
 
 ```bash
-dotnet test PandemicShield.slnx      # 101 тест: ядро, Nextclade, AMRFinderPlus
+dotnet test PandemicShield.slnx      # 156 тестів: ядро, Nextclade, AMRFinderPlus, MLST, імпорт, нагляд, звіти
 ```
 
 ---
