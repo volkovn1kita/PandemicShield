@@ -593,8 +593,9 @@ class _YearColumns extends StatelessWidget {
     final p = context.p;
     final max = years.fold<int>(1, (m, y) => math.max(m, y['isolates'] as int));
 
+    // Над смугою — число (≈15 px) і відступ 4, під нею — вісь, відступ 6 і рік (≈15 px), плюс 2 px між сегментами.
     return SizedBox(
-      height: _plotHeight + 40,
+      height: _plotHeight + 48,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
