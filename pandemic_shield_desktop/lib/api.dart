@@ -29,11 +29,17 @@ class Api {
     _ensureSuccess(response);
   }
 
-  static Future<Map<String, dynamic>> analyze({required String filePath, required int category, String? nextcladeDataset}) async {
+  static Future<Map<String, dynamic>> analyze({
+    required String filePath,
+    required int category,
+    String? nextcladeDataset,
+    String? amrOrganism,
+  }) async {
     final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/analyze'))
       ..fields['category'] = '$category'
       ..files.add(await http.MultipartFile.fromPath('file', filePath));
     if (nextcladeDataset != null) request.fields['nextcladeDataset'] = nextcladeDataset;
+    if (amrOrganism != null) request.fields['amrOrganism'] = amrOrganism;
 
     final response = await http.Response.fromStream(await request.send());
     _ensureSuccess(response);

@@ -83,6 +83,35 @@ namespace PandemicShield.Api.Extensions
                 db.SaveChanges();
                 Console.WriteLine("Маркери-варіанти для Nextclade завантажено.");
             }
+
+            if (!db.VariantMarkers.Any(m => m.Notation.StartsWith("gene:") || m.Notation.StartsWith("class:") || m.Notation.StartsWith("subclass:")))
+            {
+                // Правила для бактерій (результати AMRFinderPlus). Перевірено на звітах у PandemicShield.AmrFinder.Tests.
+                db.VariantMarkers.AddRange(
+                    new VariantMarkerEntity("Карбапенемази: стійкість до карбапенемів",
+                        "subclass:CARBAPENEM", null,
+                        "KPC, NDM, OXA-48-подібні, VIM, IMP. Карбапенеми — антибіотики резерву; такі бактерії часто знаходять у бойових пораненнях.",
+                        "https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/"),
+                    new VariantMarkerEntity("Стійкість до колістину",
+                        "subclass:COLISTIN", null,
+                        "Гени mcr і мутації pmrB/mgrB. Колістин — один з останніх варіантів проти карбапенем-резистентних бактерій.", null),
+                    new VariantMarkerEntity("ESBL CTX-M: стійкість до цефалоспоринів",
+                        "gene:blaCTX-M*", null,
+                        "Бета-лактамази розширеного спектра, найпоширеніший механізм стійкості до цефалоспоринів 3-го покоління.", null),
+                    new VariantMarkerEntity("MRSA: ген mecA",
+                        "gene:mecA", null,
+                        "Метицилін-резистентний Staphylococcus aureus.", null),
+                    new VariantMarkerEntity("Стійкість до ванкоміцину",
+                        "subclass:VANCOMYCIN", null,
+                        "Гени van (VRE, VRSA).", null),
+                    new VariantMarkerEntity("Шига-токсин 2 (STEC)",
+                        "class:STX2", null,
+                        "Гени токсину Stx2 кишкової палички: ризик гемолітико-уремічного синдрому.", null)
+                );
+
+                db.SaveChanges();
+                Console.WriteLine("Правила AMRFinderPlus завантажено.");
+            }
         }
     }
 }

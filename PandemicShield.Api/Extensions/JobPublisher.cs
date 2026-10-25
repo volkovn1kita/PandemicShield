@@ -1,19 +1,22 @@
-using PandemicShield.Contracts;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using System.Text.Json;
 
 namespace PandemicShield.Api.Extensions
 {
-    /// <summary>Публікує завдання в чергу nextclade_jobs (стійка черга: завдання переживають перезапуск RabbitMQ).</summary>
-    public sealed class NextcladeJobPublisher : IAsyncDisposable
+    /// <summary>
+    /// Публікує завдання для воркерів зовнішніх інструментів у стійкі черги (переживають перезапуск RabbitMQ).
+    /// </summary>
+    public sealed class JobPublisher : IAsyncDisposable
     {
-        public const string QueueName = "nextclade_jobs";
+        public const string NextcladeQueue = "nextclade_jobs";
+        public const string AmrFinderQueue = "amrfinder_jobs";
 
         private readonly SemaphoreSlim _lock = new(1, 1);
+        private readonly HashSet<string> _declared = new();
         private IConnection? _connection;
         private IChannel? _channel;
 
-        public async Task PublishAsync(NextcladeJobMessage job)
+        public async Task PublishAsync<T>(string queue, T job)
         {
             await _lock.WaitAsync();
             try
@@ -23,12 +26,17 @@ namespace PandemicShield.Api.Extensions
                     string rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
                     _connection = await new ConnectionFactory() { HostName = rabbitHost }.CreateConnectionAsync();
                     _channel = await _connection.CreateChannelAsync();
-                    await _channel.QueueDeclareAsync(queue: QueueName, durable: true, exclusive: false, autoDelete: false);
+                    _declared.Clear();
+                }
+
+                if (_declared.Add(queue))
+                {
+                    await _channel.QueueDeclareAsync(queue: queue, durable: true, exclusive: false, autoDelete: false);
                 }
 
                 await _channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: QueueName,
+                    routingKey: queue,
                     mandatory: false,
                     basicProperties: new BasicProperties { Persistent = true },
                     body: JsonSerializer.SerializeToUtf8Bytes(job));

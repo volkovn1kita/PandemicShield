@@ -11,6 +11,7 @@ namespace PandemicShield.DataAccess.Data
         public DbSet<SequenceResultEntity> SequenceResults { get; set; }
         public DbSet<MutationEntity> Mutations { get; set; }
         public DbSet<VariantMarkerEntity> VariantMarkers { get; set; }
+        public DbSet<AmrHitEntity> AmrHits { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +26,15 @@ namespace PandemicShield.DataAccess.Data
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.Category).HasConversion<string>();
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.Status).HasConversion<string>();
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.NextcladeStatus).HasConversion<string>();
+            modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.AmrStatus).HasConversion<string>();
+
+            modelBuilder.Entity<AmrHitEntity>().HasIndex(e => e.RunId);
+            modelBuilder.Entity<AmrHitEntity>().HasIndex(e => e.ElementSymbol);
+            modelBuilder.Entity<AmrHitEntity>()
+                .HasOne<AnalysisRunEntity>()
+                .WithMany()
+                .HasForeignKey(e => e.RunId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<SequenceResultEntity>()
                 .HasOne<AnalysisRunEntity>()

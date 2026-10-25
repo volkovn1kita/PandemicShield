@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n.dart';
 import 'pages/alerts_page.dart';
@@ -8,22 +9,35 @@ import 'pages/runs_page.dart';
 import 'store.dart';
 import 'theme.dart';
 
-void main() {
-  runApp(PandemicShieldApp(language: LanguageController(), store: AppStore()..start()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Мова й тема зберігаються між запусками застосунку.
+  final prefs = await SharedPreferences.getInstance();
+  final language = LanguageController()..value = prefs.getString('language') == 'en' ? AppLanguage.en : AppLanguage.uk;
+  language.addListener(() => prefs.setString('language', language.value.name));
+
+  runApp(PandemicShieldApp(language: language, store: AppStore()..start(), prefs: prefs));
 }
 
 class PandemicShieldApp extends StatefulWidget {
   final LanguageController language;
   final AppStore store;
+  final SharedPreferences prefs;
 
-  const PandemicShieldApp({super.key, required this.language, required this.store});
+  const PandemicShieldApp({super.key, required this.language, required this.store, required this.prefs});
 
   @override
   State<PandemicShieldApp> createState() => _PandemicShieldAppState();
 }
 
 class _PandemicShieldAppState extends State<PandemicShieldApp> {
-  bool _dark = false;
+  late bool _dark = widget.prefs.getBool('dark') ?? false;
+
+  void _toggleTheme() {
+    setState(() => _dark = !_dark);
+    widget.prefs.setBool('dark', _dark);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +47,7 @@ class _PandemicShieldAppState extends State<PandemicShieldApp> {
         title: 'PandemicShield',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(_dark ? Palette.dark : Palette.light),
-        home: AppShell(store: widget.store, onToggleTheme: () => setState(() => _dark = !_dark)),
+        home: AppShell(store: widget.store, onToggleTheme: _toggleTheme),
       ),
     );
   }
@@ -111,7 +125,11 @@ class _Sidebar extends StatelessWidget {
     final language = L10n.controllerOf(context);
     final items = [
       (Icons.folder_outlined, 'nav.runs', store.runs.length),
-      (Icons.biotech_outlined, 'nav.genomes', store.runs.fold<int>(0, (n, r) => n + ((r['sequencesAnalyzed'] ?? 0) as int))),
+      (
+        Icons.biotech_outlined,
+        'nav.genomes',
+        store.runs.fold<int>(0, (n, r) => n + ((r['sequencesAnalyzed'] ?? 0) as int) + (r['amrStatus'] == 3 ? 1 : 0)),
+      ),
       (Icons.notifications_none, 'nav.alerts', store.alerts.length),
       (Icons.rule, 'nav.rules', store.variantRules.length + store.motifs.length),
     ];

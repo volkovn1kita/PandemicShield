@@ -21,8 +21,8 @@ namespace PandemicShield.Api
 
             builder.Services.AddOpenApi();
 
-            builder.Services.AddSingleton(NextcladeOptions.FromEnvironment());
-            builder.Services.AddSingleton<NextcladeJobPublisher>();
+            builder.Services.AddSingleton(AnalysisOptions.FromEnvironment());
+            builder.Services.AddSingleton<JobPublisher>();
 
             var parserUrl = builder.Configuration["ParserUrl"] ?? "https://localhost:56627";
 
@@ -60,6 +60,7 @@ namespace PandemicShield.Api
             app.MapDictionaryEndpoints();
             app.MapAnalysisEndpoints();
             app.MapNextcladeEndpoints();
+            app.MapAmrEndpoints();
 
             app.Run();
         }

@@ -33,7 +33,7 @@ class _AlertsPageState extends State<AlertsPage> {
   Widget build(BuildContext context) {
     final p = context.p;
     final all = widget.store.alerts;
-    final nextclade = all.where((a) => a['source'] == 'nextclade').length;
+    int count(String source) => all.where((a) => a['source'] == source).length;
     final alerts = _source == 'all' ? all : all.where((a) => a['source'] == _source).toList();
 
     final columns = [
@@ -41,7 +41,7 @@ class _AlertsPageState extends State<AlertsPage> {
       Col(context.tr('col.genome'), flex: 3),
       Col(context.tr('alerts.variant'), flex: 2),
       Col(context.tr('alerts.position'), width: 140),
-      Col(context.tr('alerts.source'), width: 100),
+      Col(context.tr('alerts.source'), width: 120),
       Col(context.tr('alerts.when'), width: 100, alignRight: true),
       const Col('', width: 36),
     ];
@@ -55,8 +55,9 @@ class _AlertsPageState extends State<AlertsPage> {
             ChoiceTabs<String>(
               options: [
                 ('all', '${context.tr('common.all')}  ${all.length}'),
-                ('nextclade', '${context.tr('source.nextclade')}  $nextclade'),
-                ('orf-motif', '${context.tr('source.orf')}  ${all.length - nextclade}'),
+                ('nextclade', '${context.tr('source.nextclade')}  ${count('nextclade')}'),
+                ('amrfinder', '${context.tr('source.amrfinder')}  ${count('amrfinder')}'),
+                ('orf-motif', '${context.tr('source.orf')}  ${count('orf-motif')}'),
               ],
               value: _source,
               onChanged: (v) => setState(() => _source = v),
@@ -72,11 +73,17 @@ class _AlertsPageState extends State<AlertsPage> {
               itemCount: alerts.length,
               itemBuilder: (context, i) {
                 final alert = alerts[i];
-                final bool fromNextclade = alert['source'] == 'nextclade';
+                final String source = alert['source'];
+                final bool fromNextclade = source == 'nextclade';
                 final String position = fromNextclade
                     ? ((alert['ntStart'] ?? 0) > 0 ? 'ref ${alert['ntStart']}' : '')
                     : '${alert['ntStart']}–${alert['ntEnd']} ${alert['strand']}';
-                final String variant = fromNextclade ? shortVariant(alert['variant']) : '';
+                final String variant = source == 'orf-motif' ? '' : shortVariant(alert['variant']);
+                final (sourceKey, positionHint) = switch (source) {
+                  'nextclade' => ('source.nextclade', 'alerts.refHint'),
+                  'amrfinder' => ('source.amrfinder', 'alerts.contigHint'),
+                  _ => ('source.orf', 'alerts.recordHint'),
+                };
 
                 return TableRowItem(
                   columns: columns,
@@ -97,10 +104,10 @@ class _AlertsPageState extends State<AlertsPage> {
                       style: mono(context, size: 12.5, color: p.danger),
                     ),
                     Tooltip(
-                      message: context.tr(fromNextclade ? 'alerts.refHint' : 'alerts.recordHint'),
+                      message: context.tr(positionHint),
                       child: Text(position, style: mono(context, size: 12, color: p.muted)),
                     ),
-                    Text(context.tr(fromNextclade ? 'source.nextclade' : 'source.orf'), style: TextStyle(fontSize: 13, color: p.muted)),
+                    Text(context.tr(sourceKey), style: TextStyle(fontSize: 13, color: p.muted)),
                     Text(relativeTime(context, alert['detectedAt']), style: TextStyle(fontSize: 13, color: p.muted)),
                     IconButton(
                       tooltip: context.tr('common.delete'),

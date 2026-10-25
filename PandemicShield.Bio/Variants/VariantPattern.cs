@@ -9,7 +9,12 @@ namespace PandemicShield.Bio.Variants
         AminoAcidSubstitution,
         AminoAcidDeletion,
         Clade,
-        Lineage
+        Lineage,
+
+        // Гени й класи резистентності з AMRFinderPlus (бактерії).
+        AmrGene,
+        AmrClass,
+        AmrSubclass
     }
 
     /// <summary>
@@ -22,6 +27,8 @@ namespace PandemicShield.Bio.Variants
     /// <item><c>S:F157-</c> — делеція амінокислоти</item>
     /// <item><c>clade:21J</c>, <c>clade:Delta</c> — клада Nextstrain або назва ВООЗ</item>
     /// <item><c>lineage:BA.2.86*</c> — лінія Pango; <c>*</c> означає «разом із нащадками»</item>
+    /// <item><c>gene:blaKPC*</c> — ген резистентності AMRFinderPlus (символ; <c>*</c> — будь-який алель, наприклад blaKPC-2)</item>
+    /// <item><c>class:AMINOGLYCOSIDE</c>, <c>subclass:CARBAPENEM</c> — клас або підклас антибіотиків, до яких передбачено стійкість</item>
     /// </list>
     /// </summary>
     public sealed partial record VariantPattern(
@@ -35,7 +42,9 @@ namespace PandemicShield.Bio.Variants
         // Будь-яка заміна (амінокислоти чи нуклеотиду) у цій позиції.
         public bool AnyAlt => Alt is null;
 
-        public bool IncludesDescendants => Kind == VariantKind.Lineage && Name!.EndsWith('*');
+        public bool IncludesDescendants => Kind is VariantKind.Lineage or VariantKind.AmrGene && Name!.EndsWith('*');
+
+        public bool IsAmr => Kind is VariantKind.AmrGene or VariantKind.AmrClass or VariantKind.AmrSubclass;
 
         public override string ToString() => Kind switch
         {
@@ -45,6 +54,9 @@ namespace PandemicShield.Bio.Variants
             VariantKind.AminoAcidDeletion => $"{Gene}:{Ref}{Position}-",
             VariantKind.Clade => $"clade:{Name}",
             VariantKind.Lineage => $"lineage:{Name}",
+            VariantKind.AmrGene => $"gene:{Name}",
+            VariantKind.AmrClass => $"class:{Name}",
+            VariantKind.AmrSubclass => $"subclass:{Name}",
             _ => throw new InvalidOperationException()
         };
 
@@ -78,6 +90,22 @@ namespace PandemicShield.Bio.Variants
                 if (prefix.Equals("lineage", StringComparison.OrdinalIgnoreCase) && LineageRegex().IsMatch(rest))
                 {
                     pattern = new VariantPattern(VariantKind.Lineage, null, 0, null, null, rest.ToUpperInvariant());
+                    return true;
+                }
+
+                if (prefix.Equals("gene", StringComparison.OrdinalIgnoreCase) && AmrGeneRegex().IsMatch(rest))
+                {
+                    // Символи генів чутливі до регістру (blaKPC, mecA), тож залишаємо як є.
+                    pattern = new VariantPattern(VariantKind.AmrGene, null, 0, null, null, rest);
+                    return true;
+                }
+
+                if ((prefix.Equals("class", StringComparison.OrdinalIgnoreCase) || prefix.Equals("subclass", StringComparison.OrdinalIgnoreCase))
+                    && AmrClassRegex().IsMatch(rest))
+                {
+                    var kind = prefix.Equals("class", StringComparison.OrdinalIgnoreCase) ? VariantKind.AmrClass : VariantKind.AmrSubclass;
+                    // AMRFinderPlus пише класи великими літерами з підкресленнями: BETA-LACTAM, QUATERNARY AMMONIUM.
+                    pattern = new VariantPattern(kind, null, 0, null, null, rest.ToUpperInvariant().Replace('_', ' '));
                     return true;
                 }
 
@@ -147,5 +175,11 @@ namespace PandemicShield.Bio.Variants
 
         [GeneratedRegex(@"^[A-Za-z]{1,3}(\.\d+)*\*?$")]
         private static partial Regex LineageRegex();
+
+        [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9_.()'\-]*\*?$")]
+        private static partial Regex AmrGeneRegex();
+
+        [GeneratedRegex(@"^[A-Za-z][A-Za-z0-9 _\-]*$")]
+        private static partial Regex AmrClassRegex();
     }
 }

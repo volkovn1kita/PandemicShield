@@ -5,12 +5,14 @@ namespace PandemicShield.DataAccess.Entities
 {
     /// <summary>
     /// Сповіщення про знайдений маркер. Source визначає систему координат:
-    /// "orf-motif" — координати в самому записі FASTA; "nextclade" — у референсі набору даних (наприклад, MN908947).
+    /// "orf-motif" — координати в самому записі FASTA; "nextclade" — у референсі набору даних (наприклад, MN908947);
+    /// "amrfinder" — у контигу бактеріальної збірки (RecordId).
     /// </summary>
     public class ThreatAlertEntity
     {
         public const string OrfMotifSource = "orf-motif";
         public const string NextcladeSource = "nextclade";
+        public const string AmrFinderSource = "amrfinder";
 
         public Guid Id { get; private set; }
         public Guid? RunId { get; private set; }
@@ -55,6 +57,15 @@ namespace PandemicShield.DataAccess.Entities
             ProteinSequence = proteinSequence;
             Category = category;
             DetectedAt = DateTime.UtcNow;
+        }
+
+        public static ThreatAlertEntity FromAmrFinder(Guid runId, string threatName, AmrHitEntity hit)
+        {
+            var alert = new ThreatAlertEntity(runId, threatName, hit.ContigId, hit.Strand, hit.Start, hit.Stop, 0,
+                string.Empty, ThreatCategory.Bacteria);
+            alert.Source = AmrFinderSource;
+            alert.Variant = hit.ElementSymbol;
+            return alert;
         }
 
         public static ThreatAlertEntity FromNextclade(

@@ -63,6 +63,11 @@ namespace PandemicShield.Worker
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             var orfOptions = ReadOrfOptions();
+            var bacterialOrfOptions = orfOptions with
+            {
+                GeneticCode = GeneticCode.BacterialArchaealPlastid,
+                AllowAlternativeStarts = true
+            };
             await GetCachedDiseasesAsync();
 
             string rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
@@ -98,7 +103,9 @@ namespace PandemicShield.Worker
                 var allDiseases = await GetCachedDiseasesAsync();
                 var relevantDiseases = allDiseases.Where(d => d.Category == dnaChunkMessage.Category).ToList();
 
-                List<ThreatReport> reports = MutationScannerService.ScanChunk(dnaChunkMessage, relevantDiseases, orfOptions);
+                // Бактерії: таблиця коду NCBI 11 і альтернативні старт-кодони (GTG, TTG), як у прокаріотів.
+                var options = dnaChunkMessage.Category == ThreatCategory.Bacteria ? bacterialOrfOptions : orfOptions;
+                List<ThreatReport> reports = MutationScannerService.ScanChunk(dnaChunkMessage, relevantDiseases, options);
 
                 foreach (ThreatReport report in reports)
                 {

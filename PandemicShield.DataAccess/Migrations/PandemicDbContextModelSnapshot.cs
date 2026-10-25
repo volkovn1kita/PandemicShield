@@ -22,11 +22,99 @@ namespace PandemicShield.DataAccess.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.AmrHitEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Class")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClosestReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContigId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double?>("CoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("ElementName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ElementSymbol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double?>("IdentityPercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Start")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Stop")
+                        .HasColumnType("bigint");
+
+                    b.Property<char>("Strand")
+                        .HasColumnType("character(1)");
+
+                    b.Property<string>("Subclass")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subtype")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ElementSymbol");
+
+                    b.HasIndex("RunId");
+
+                    b.ToTable("AmrHits");
+                });
+
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.AnalysisRunEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AmrCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AmrDatabaseVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AmrMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AmrOrganism")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AmrStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<long>("BaseCount")
                         .HasColumnType("bigint");
@@ -308,6 +396,15 @@ namespace PandemicShield.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("VariantMarkers");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.AmrHitEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.AnalysisRunEntity", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.MutationEntity", b =>

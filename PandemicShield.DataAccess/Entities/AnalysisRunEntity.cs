@@ -10,7 +10,8 @@ namespace PandemicShield.DataAccess.Entities
         Failed
     }
 
-    public enum NextcladeStatus
+    /// <summary>Стан аналізу зовнішнім інструментом (Nextclade, AMRFinderPlus). У БД зберігається рядком.</summary>
+    public enum ToolStatus
     {
         NotRequested,
         Queued,
@@ -36,11 +37,17 @@ namespace PandemicShield.DataAccess.Entities
         public int ChunkCount { get; private set; }
         public string? Message { get; private set; }
 
-        public NextcladeStatus NextcladeStatus { get; private set; }
+        public ToolStatus NextcladeStatus { get; private set; }
         public string? NextcladeDataset { get; private set; }
         public string? NextcladeMessage { get; private set; }
         public DateTime? NextcladeCompletedAt { get; private set; }
         public int SequencesAnalyzed { get; private set; }
+
+        public ToolStatus AmrStatus { get; private set; }
+        public string? AmrOrganism { get; private set; }
+        public string? AmrDatabaseVersion { get; private set; }
+        public string? AmrMessage { get; private set; }
+        public DateTime? AmrCompletedAt { get; private set; }
 
         public AnalysisRunEntity(string fileName, ThreatCategory category)
         {
@@ -64,15 +71,15 @@ namespace PandemicShield.DataAccess.Entities
 
         public void RequestNextclade(string dataset)
         {
-            NextcladeStatus = NextcladeStatus.Queued;
+            NextcladeStatus = ToolStatus.Queued;
             NextcladeDataset = dataset;
         }
 
-        public void MarkNextcladeRunning() => NextcladeStatus = NextcladeStatus.Running;
+        public void MarkNextcladeRunning() => NextcladeStatus = ToolStatus.Running;
 
         public void MarkNextcladeCompleted(int sequencesAnalyzed, string message)
         {
-            NextcladeStatus = NextcladeStatus.Completed;
+            NextcladeStatus = ToolStatus.Completed;
             NextcladeCompletedAt = DateTime.UtcNow;
             SequencesAnalyzed = sequencesAnalyzed;
             NextcladeMessage = message;
@@ -80,9 +87,32 @@ namespace PandemicShield.DataAccess.Entities
 
         public void MarkNextcladeFailed(string message)
         {
-            NextcladeStatus = NextcladeStatus.Failed;
+            NextcladeStatus = ToolStatus.Failed;
             NextcladeCompletedAt = DateTime.UtcNow;
             NextcladeMessage = message;
+        }
+
+        public void RequestAmr(string? organism)
+        {
+            AmrStatus = ToolStatus.Queued;
+            AmrOrganism = organism;
+        }
+
+        public void MarkAmrRunning() => AmrStatus = ToolStatus.Running;
+
+        public void MarkAmrCompleted(string? databaseVersion, string message)
+        {
+            AmrStatus = ToolStatus.Completed;
+            AmrCompletedAt = DateTime.UtcNow;
+            AmrDatabaseVersion = databaseVersion;
+            AmrMessage = message;
+        }
+
+        public void MarkAmrFailed(string message)
+        {
+            AmrStatus = ToolStatus.Failed;
+            AmrCompletedAt = DateTime.UtcNow;
+            AmrMessage = message;
         }
 
         public void MarkFailed(string message)

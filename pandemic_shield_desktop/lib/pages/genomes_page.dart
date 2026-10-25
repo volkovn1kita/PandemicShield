@@ -7,6 +7,7 @@ import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'amr_view.dart';
 
 // ==========================================
 // GENOMES: результати Nextclade для запуску
@@ -61,7 +62,7 @@ class _GenomesPageState extends State<GenomesPage> {
 
   Future<void> _load() async {
     final runId = widget.selectedRunId;
-    if (runId == null) return;
+    if (runId == null || _run?['category'] == 2) return;
     try {
       final results = await Future.wait([
         Api.list('/runs/$runId/sequences'),
@@ -149,6 +150,10 @@ class _GenomesPageState extends State<GenomesPage> {
   @override
   Widget build(BuildContext context) {
     final run = _run;
+    // Бактеріальні збірки аналізує AMRFinderPlus: інша таблиця, інший пошук.
+    if (run?['category'] == 2) {
+      return AmrRunView(key: ValueKey(run['id']), store: widget.store, run: run, active: widget.active, onSelectRun: widget.onSelectRun);
+    }
     final selected = _sequences.where((s) => s['id'] == _selectedSequenceId).firstOrNull;
     final status = (run?['nextcladeStatus'] ?? 0) as int;
 
@@ -156,7 +161,7 @@ class _GenomesPageState extends State<GenomesPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TopBar(
-          title: _RunPicker(store: widget.store, run: run, onSelect: widget.onSelectRun),
+          title: RunPicker(store: widget.store, run: run, onSelect: widget.onSelectRun),
           actions: [
             SizedBox(
               width: 300,
@@ -413,12 +418,12 @@ class _GenomesPageState extends State<GenomesPage> {
 }
 
 /// Вибір запуску в заголовку сторінки.
-class _RunPicker extends StatelessWidget {
+class RunPicker extends StatelessWidget {
   final AppStore store;
   final dynamic run;
   final ValueChanged<String> onSelect;
 
-  const _RunPicker({required this.store, required this.run, required this.onSelect});
+  const RunPicker({super.key, required this.store, required this.run, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {

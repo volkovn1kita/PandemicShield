@@ -10,6 +10,9 @@ import '../widgets.dart';
 // RULES: варіанти Nextclade і мотиви ORF
 // ==========================================
 
+/// Правила для генів резистентності (AMRFinderPlus) не прив'язуються до набору даних Nextclade.
+bool isAmrNotation(String notation) => RegExp(r'^(gene|class|subclass):', caseSensitive: false).hasMatch(notation.trim());
+
 /// Розбір позначення для живої підказки. Остаточна перевірка — на сервері (VariantPattern).
 ({String key, Map<String, Object?> args})? describeNotation(String text) {
   final value = text.trim();
@@ -18,6 +21,17 @@ import '../widgets.dart';
 
   final lineage = RegExp(r'^lineage:([A-Za-z]{1,3}(\.\d+)*\*?)$', caseSensitive: false).firstMatch(value);
   if (lineage != null) return (key: 'rules.kind.lineage', args: {'name': lineage[1]!.toUpperCase()});
+
+  final amr = RegExp(r'^(gene|class|subclass):(.+)$', caseSensitive: false).firstMatch(value);
+  if (amr != null) {
+    final kind = amr[1]!.toLowerCase();
+    final name = amr[2]!.trim();
+    return switch (kind) {
+      'gene' => (key: 'rules.kind.amrGene', args: {'name': name}),
+      'class' => (key: 'rules.kind.amrClass', args: {'name': name.toUpperCase()}),
+      _ => (key: 'rules.kind.amrSubclass', args: {'name': name.toUpperCase()}),
+    };
+  }
 
   final aa = RegExp(r'^([A-Za-z][A-Za-z0-9_.\-]*):([A-Za-z*])?(\d+)([A-Za-z*]|-)?$').firstMatch(value);
   if (aa != null && int.parse(aa[3]!) > 0) {
@@ -115,7 +129,11 @@ class _RulesPageState extends State<RulesPage> {
                   Text(rule['name'], overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
                   Text(rule['notation'], style: mono(context, size: 12.5)),
                   Text(
-                    rule['dataset'] == null ? context.tr('common.anyDataset') : datasetName(rule['dataset']),
+                    isAmrNotation(rule['notation'])
+                        ? 'AMRFinderPlus'
+                        : rule['dataset'] == null
+                        ? context.tr('common.anyDataset')
+                        : datasetName(rule['dataset']),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 13, color: p.muted),
                   ),
@@ -224,7 +242,7 @@ class _NewRuleDialogState extends State<_NewRuleDialog> {
       await Api.post('/variant-markers', {
         'name': _name.text.trim(),
         'notation': _notation.text.trim(),
-        'dataset': _dataset,
+        'dataset': isAmrNotation(_notation.text) ? null : _dataset,
         'description': _description.text.trim().isEmpty ? null : _description.text.trim(),
       });
       widget.store.refresh();
@@ -286,7 +304,15 @@ class _NewRuleDialogState extends State<_NewRuleDialog> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(context.tr('rules.examples'), style: TextStyle(fontSize: 12, color: p.muted)),
-                  for (final example in ['S:N501Y', 'S:E484', 'S:F157-', 'A23403G', 'clade:Delta', 'lineage:BA.2.86*'])
+                  for (final example in [
+                    'S:N501Y',
+                    'S:E484',
+                    'S:F157-',
+                    'clade:Delta',
+                    'lineage:BA.2.86*',
+                    'gene:blaKPC*',
+                    'subclass:CARBAPENEM',
+                  ])
                     InkWell(
                       borderRadius: BorderRadius.circular(4),
                       onTap: () => _notation.text = example,
@@ -294,16 +320,18 @@ class _NewRuleDialogState extends State<_NewRuleDialog> {
                     ),
                 ],
               ),
-              const SizedBox(height: 16),
-              FieldLabel(
-                context.tr('col.dataset'),
-                child: DatasetDropdown(
-                  datasets: widget.store.datasets,
-                  value: _dataset,
-                  nullLabel: context.tr('common.anyDataset'),
-                  onChanged: (v) => setState(() => _dataset = v),
+              if (!isAmrNotation(_notation.text)) ...[
+                const SizedBox(height: 16),
+                FieldLabel(
+                  context.tr('col.dataset'),
+                  child: DatasetDropdown(
+                    datasets: widget.store.datasets,
+                    value: _dataset,
+                    nullLabel: context.tr('common.anyDataset'),
+                    onChanged: (v) => setState(() => _dataset = v),
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 16),
               FieldLabel(
                 context.tr('rules.descriptionOptional'),

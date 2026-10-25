@@ -34,6 +34,19 @@ namespace PandemicShield.Bio.Tests
         }
 
         [Theory]
+        [InlineData("gene:blaKPC*", VariantKind.AmrGene, "blaKPC*", "gene:blaKPC*")]
+        [InlineData("gene:aph(3'')-Ib", VariantKind.AmrGene, "aph(3'')-Ib", "gene:aph(3'')-Ib")]
+        [InlineData("subclass:carbapenem", VariantKind.AmrSubclass, "CARBAPENEM", "subclass:CARBAPENEM")]
+        [InlineData("class:QUATERNARY_AMMONIUM", VariantKind.AmrClass, "QUATERNARY AMMONIUM", "class:QUATERNARY AMMONIUM")]
+        public void Parses_amr_notation(string text, VariantKind kind, string name, string canonical)
+        {
+            var pattern = VariantPattern.Parse(text);
+
+            Assert.Equal((kind, name, true), (pattern.Kind, pattern.Name, pattern.IsAmr));
+            Assert.Equal(canonical, pattern.ToString());
+        }
+
+        [Theory]
         [InlineData("")]
         [InlineData("S:D0G")]
         [InlineData("S:D614D")]

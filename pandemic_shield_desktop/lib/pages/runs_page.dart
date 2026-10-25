@@ -6,6 +6,7 @@ import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'amr_view.dart' show OrganismDropdown, organismName;
 
 // ==========================================
 // RUNS
@@ -21,11 +22,11 @@ class RunsPage extends StatelessWidget {
     final p = context.p;
     final columns = [
       Col(context.tr('col.file'), flex: 4),
-      Col(context.tr('col.dataset'), flex: 2),
+      Col(context.tr('col.datasetOrOrganism'), flex: 2),
       Col(context.tr('col.records'), width: 80, alignRight: true),
       Col(context.tr('col.size'), width: 90, alignRight: true),
       const Col('', width: 24),
-      Col(context.tr('col.nextclade'), flex: 2),
+      Col(context.tr('col.analysis'), flex: 3),
       Col(context.tr('col.alerts'), width: 90, alignRight: true),
       Col(context.tr('col.started'), width: 110, alignRight: true),
     ];
@@ -57,6 +58,7 @@ class RunsPage extends StatelessWidget {
               itemBuilder: (context, i) {
                 final run = store.runs[i];
                 final alerts = store.alertCountForRun(run['id']);
+                final bool bacterial = run['category'] == 2;
                 return TableRowItem(
                   columns: columns,
                   onTap: () => onOpenRun(run['id']),
@@ -75,14 +77,31 @@ class RunsPage extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      datasetName(run['nextcladeDataset']),
+                      bacterial ? organismName(run['amrOrganism']) : datasetName(run['nextcladeDataset']),
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: p.muted),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: p.muted,
+                        fontStyle: bacterial && run['amrOrganism'] != null ? FontStyle.italic : null,
+                      ),
                     ),
                     Text('${run['recordCount']}', style: numbers),
                     Text(formatBases(run['baseCount'] ?? 0), style: numbers),
                     const SizedBox(),
-                    RunStatusLabel(status: run['nextcladeStatus'] ?? 0, message: run['nextcladeMessage']),
+                    Row(
+                      children: [
+                        if (bacterial || (run['nextcladeStatus'] ?? 0) != 0)
+                          SizedBox(
+                            width: 108,
+                            child: Text(bacterial ? 'AMRFinderPlus' : 'Nextclade', style: TextStyle(fontSize: 13, color: p.muted)),
+                          ),
+                        Flexible(
+                          child: bacterial
+                              ? RunStatusLabel(status: run['amrStatus'] ?? 0, message: run['amrMessage'])
+                              : RunStatusLabel(status: run['nextcladeStatus'] ?? 0, message: run['nextcladeMessage']),
+                        ),
+                      ],
+                    ),
                     Text(alerts == 0 ? '—' : '$alerts', style: numbers.copyWith(color: alerts == 0 ? p.faint : p.danger)),
                     Text(relativeTime(context, run['startedAt']), style: numbers),
                   ],
@@ -112,6 +131,7 @@ class NewAnalysisDialog extends StatefulWidget {
 class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
   int _category = 0;
   late String? _dataset = widget.store.datasets.where((d) => d.contains('sars-cov-2')).firstOrNull;
+  String? _organism;
   PlatformFile? _file;
   bool _uploading = false;
 
@@ -124,18 +144,26 @@ class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
     if (_file?.path == null) return;
     setState(() => _uploading = true);
     final dataset = _category == 0 ? _dataset : null;
+    final bacterial = _category == 2;
     try {
-      final response = await Api.analyze(filePath: _file!.path!, category: _category, nextcladeDataset: dataset);
+      final response = await Api.analyze(
+        filePath: _file!.path!,
+        category: _category,
+        nextcladeDataset: dataset,
+        amrOrganism: bacterial ? _organism : null,
+      );
       if (!mounted) return;
       Navigator.pop(context);
       showMessage(
         context,
-        dataset != null
+        bacterial
+            ? context.tr('upload.sentAmr')
+            : dataset != null
             ? context.tr('upload.sentNextclade')
             : context.tr('upload.sent', {'records': response['recordCount'], 'bases': formatBases(response['baseCount'] ?? 0)}),
       );
       widget.store.refresh();
-      if (dataset != null) widget.onStarted(response['runId']);
+      if (dataset != null || bacterial) widget.onStarted(response['runId']);
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
     } catch (_) {
@@ -164,7 +192,7 @@ class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: ChoiceTabs<int>(
-                  options: [(0, context.tr('common.virus')), (1, context.tr('common.human'))],
+                  options: [(0, context.tr('common.virus')), (2, context.tr('common.bacteria')), (1, context.tr('common.human'))],
                   value: _category,
                   onChanged: (v) => setState(() => _category = v),
                 ),
@@ -182,11 +210,21 @@ class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
                   onChanged: (v) => setState(() => _dataset = v),
                 ),
               )
+            else if (_category == 2)
+              FieldLabel(
+                context.tr('upload.organism'),
+                hint: context.tr('upload.organismHint'),
+                child: OrganismDropdown(
+                  organisms: widget.store.organisms,
+                  value: _organism,
+                  onChanged: (v) => setState(() => _organism = v),
+                ),
+              )
             else
               Text(context.tr('upload.humanHint'), style: TextStyle(fontSize: 12.5, color: p.muted)),
             const SizedBox(height: 18),
             FieldLabel(
-              context.tr('upload.file'),
+              context.tr(_category == 2 ? 'upload.bacteriaFile' : 'upload.file'),
               child: Row(
                 children: [
                   OutlinedButton(onPressed: _uploading ? null : _pick, child: Text(context.tr('upload.pick'))),

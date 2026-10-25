@@ -135,8 +135,9 @@
 2. ✅ Маркер як варіант (`S:N501Y`, `clade:Delta`, `lineage:BA.2.86*`) і правила сповіщень поверх
    результатів Nextclade.
 3. ✅ Новий інтерфейс (УКР/EN, сторінка «Зразки», карта геному). Деталі — у [`STAGE2_NEXTCLADE.md`](STAGE2_NEXTCLADE.md).
-4. SignalR: прогрес запуску замість опитування.
-5. Підтримка FASTQ на вході (minimap2 + ivar → консенсус → Nextclade) і `nextclade sort` для змішаних файлів.
+4. ✅ Етап 3: бактерії й резистентність (AMRFinderPlus), див. [`STAGE3_AMR.md`](STAGE3_AMR.md).
+5. SignalR: прогрес запуску замість опитування.
+6. Підтримка FASTQ на вході (minimap2 + ivar → консенсус → Nextclade) і `nextclade sort` для змішаних файлів.
 
 ### Етап 3: дані та візуалізація
 1. Імпорт результатів AMRFinderPlus з NCBI Pathogen Detection (FTP або BigQuery). Карта генів

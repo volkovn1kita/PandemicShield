@@ -12,7 +12,7 @@ namespace PandemicShield.Api.Endpoints
 
         public static void MapNextcladeEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/nextclade/datasets", (NextcladeOptions nextclade) => Results.Ok(nextclade.Datasets));
+            app.MapGet("/api/nextclade/datasets", (AnalysisOptions nextclade) => Results.Ok(nextclade.Datasets));
 
             app.MapGet("/api/runs/{id}/sequences", async (Guid id, PandemicDbContext db) =>
             {
@@ -80,7 +80,7 @@ namespace PandemicShield.Api.Endpoints
             app.MapGet("/api/variant-markers", async (PandemicDbContext db) =>
                 Results.Ok(await db.VariantMarkers.OrderBy(m => m.Name).ToListAsync()));
 
-            app.MapPost("/api/variant-markers", async (VariantMarkerRequest request, PandemicDbContext db, NextcladeOptions nextclade) =>
+            app.MapPost("/api/variant-markers", async (VariantMarkerRequest request, PandemicDbContext db, AnalysisOptions nextclade) =>
             {
                 if (string.IsNullOrWhiteSpace(request.Name))
                     return Results.BadRequest("Вкажіть назву маркера.");
@@ -88,6 +88,8 @@ namespace PandemicShield.Api.Endpoints
                     return Results.BadRequest(error);
 
                 string? dataset = string.IsNullOrWhiteSpace(request.Dataset) ? null : request.Dataset.Trim();
+                if (dataset != null && pattern.IsAmr)
+                    return Results.BadRequest("Правила для генів резистентності (gene:, class:, subclass:) не прив'язуються до набору даних Nextclade.");
                 if (dataset != null && !nextclade.IsKnownDataset(dataset))
                     return Results.BadRequest($"Невідомий набір даних Nextclade: {dataset}");
 

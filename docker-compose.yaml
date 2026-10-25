@@ -88,7 +88,24 @@ services:
       - postgres
       - api
 
-  # 7. Центр Керування (API)
+  # 7. Воркер AMRFinderPlus (гени та мутації резистентності бактерій)
+  amrfinder:
+    build:
+      context: .
+      dockerfile: PandemicShield.AmrFinder/Dockerfile
+    container_name: pandemic_amrfinder
+    restart: always
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+    volumes:
+      - run_data:/data
+    depends_on:
+      - rabbitmq
+      - postgres
+      - api
+
+  # 8. Центр Керування (API)
   api:
     build:
       context: .
