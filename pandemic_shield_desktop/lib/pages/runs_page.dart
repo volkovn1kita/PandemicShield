@@ -24,8 +24,9 @@ class RunsPage extends StatelessWidget {
     final columns = [
       Col(context.tr('col.file'), flex: 4),
       Col(context.tr('col.datasetOrOrganism'), flex: 2),
-      Col(context.tr('col.records'), width: 80, alignRight: true),
-      Col(context.tr('col.size'), width: 90, alignRight: true),
+      // У вузькому вікні (таблиця вужча за 900 px) ховаються записи й розмір: вони видні на сторінці запуску.
+      Col(context.tr('col.records'), width: 80, alignRight: true, hideBelow: 900),
+      Col(context.tr('col.size'), width: 90, alignRight: true, hideBelow: 900),
       const Col('', width: 24),
       Col(context.tr('col.analysis'), flex: 3),
       Col(context.tr('col.alerts'), width: 90, alignRight: true),
@@ -103,10 +104,17 @@ class RunsPage extends StatelessWidget {
                     const SizedBox(),
                     Row(
                       children: [
+                        // Назва інструмента стискається разом зі статусом, а не виштовхує його за край комірки.
                         if (bacterial || (run['nextcladeStatus'] ?? 0) != 0)
-                          SizedBox(
-                            width: 108,
-                            child: Text(bacterial ? 'AMRFinderPlus' : 'Nextclade', style: TextStyle(fontSize: 13, color: p.muted)),
+                          Flexible(
+                            child: SizedBox(
+                              width: 108,
+                              child: Text(
+                                bacterial ? 'AMRFinderPlus' : 'Nextclade',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 13, color: p.muted),
+                              ),
+                            ),
                           ),
                         Flexible(
                           child: bacterial

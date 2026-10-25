@@ -45,8 +45,17 @@ class Col {
   final double? width;
   final bool alignRight;
 
-  const Col(this.label, {this.flex = 1, this.width, this.alignRight = false});
+  /// Другорядна колонка ховається, коли таблиця вужча за це значення (вузьке вікно): решта не налазить одна на одну.
+  final double? hideBelow;
+
+  const Col(this.label, {this.flex = 1, this.width, this.alignRight = false, this.hideBelow});
 }
+
+/// Номери колонок, видимих при ширині таблиці [width].
+List<int> _visibleColumns(List<Col> columns, double width) => [
+  for (int i = 0; i < columns.length; i++)
+    if (columns[i].hideBelow == null || width >= columns[i].hideBelow!) i,
+];
 
 /// Кожна комірка має відступ 16 px праворуч, щоб тексти сусідніх колонок не торкались;
 /// тому правий відступ рядка — лише 4 px (разом із комірковим виходить 20, як зліва).
@@ -71,18 +80,20 @@ class TableHeader extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: p.border)),
       ),
-      child: Row(
-        children: [
-          for (final col in columns)
-            _cell(
-              col,
-              Text(
-                col.label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: p.muted, fontWeight: FontWeight.w500),
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
+          children: [
+            for (final i in _visibleColumns(columns, constraints.maxWidth))
+              _cell(
+                columns[i],
+                Text(
+                  columns[i].label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: p.muted, fontWeight: FontWeight.w500),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -112,7 +123,10 @@ class TableRowItem extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: p.border.withValues(alpha: 0.6))),
           ),
-          child: Row(children: [for (int i = 0; i < columns.length; i++) _cell(columns[i], cells[i])]),
+          child: LayoutBuilder(
+            builder: (context, constraints) =>
+                Row(children: [for (final i in _visibleColumns(columns, constraints.maxWidth)) _cell(columns[i], cells[i])]),
+          ),
         ),
       ),
     );
