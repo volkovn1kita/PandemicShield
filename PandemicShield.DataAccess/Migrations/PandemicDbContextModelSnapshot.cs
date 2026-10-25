@@ -17,10 +17,204 @@ namespace PandemicShield.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.AmrHitEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Class")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClosestReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContigId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double?>("CoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("ElementName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ElementSymbol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double?>("IdentityPercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Start")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Stop")
+                        .HasColumnType("bigint");
+
+                    b.Property<char>("Strand")
+                        .HasColumnType("character(1)");
+
+                    b.Property<string>("Subclass")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subtype")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ElementSymbol");
+
+                    b.HasIndex("RunId");
+
+                    b.ToTable("AmrHits");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.AnalysisRunEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AmrCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AmrDatabaseVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AmrMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AmrOrganism")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AmrStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("BaseCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ChunkCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("InvalidSymbolCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("NextcladeCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NextcladeDataset")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NextcladeMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NextcladeStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SequencesAnalyzed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("StreamedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Runs");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.MutationEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Alt")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("EndPosition")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Gene")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Ref")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SequenceResultId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Label");
+
+                    b.HasIndex("RunId");
+
+                    b.HasIndex("SequenceResultId");
+
+                    b.ToTable("Mutations");
+                });
 
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.ReferenceMutationEntity", b =>
                 {
@@ -44,11 +238,86 @@ namespace PandemicShield.DataAccess.Migrations
                     b.ToTable("Mutation");
                 });
 
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.SequenceResultEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AnalyzedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Clade")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CladeDisplay")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Coverage")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Dataset")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DatasetTag")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsReverseComplement")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Lineage")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("QcScore")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("QcStatus")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SeqName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TotalDeletions")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalFrameShifts")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalInsertions")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalMissing")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalSubstitutions")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Warnings")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RunId");
+
+                    b.ToTable("SequenceResults");
+                });
+
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.ThreatAlertEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<int>("AaPosition")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Category")
                         .IsRequired()
@@ -57,20 +326,111 @@ namespace PandemicShield.DataAccess.Migrations
                     b.Property<DateTime>("DetectedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("GlobalPosition")
-                        .HasColumnType("integer");
+                    b.Property<long>("NtEnd")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("NtStart")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("ProteinSequence")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("RecordId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SequenceResultId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<char>("Strand")
+                        .HasColumnType("character(1)");
+
                     b.Property<string>("ThreatName")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Variant")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("RunId");
+
                     b.ToTable("Threats");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.VariantMarkerEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Dataset")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VariantMarkers");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.AmrHitEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.AnalysisRunEntity", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.MutationEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.SequenceResultEntity", null)
+                        .WithMany()
+                        .HasForeignKey("SequenceResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.SequenceResultEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.AnalysisRunEntity", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.ThreatAlertEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.AnalysisRunEntity", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

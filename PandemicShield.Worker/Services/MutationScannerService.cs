@@ -1,33 +1,51 @@
-﻿using PandemicShield.Worker.Data;
+﻿using PandemicShield.Bio;
 using PandemicShield.Contracts;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using PandemicShield.Worker.Data;
 
 namespace PandemicShield.Worker.Services
 {
     public class MutationScannerService
     {
-        public static List<ThreatReport> ScanProtein (ProteinData protein, List<DiseaseMarker> diseases)
+        /// <summary>
+        /// Шукає ORF у вікні (6 рамок) і маркери в їхніх білках. Кожна знахідка звітується рівно один раз:
+        /// лише вікном, у ядрі якого лежить старт-кодон її ORF.
+        /// </summary>
+        public static List<ThreatReport> ScanChunk(DnaChunkMessage chunk, List<DiseaseMarker> diseases, OrfFinderOptions options)
         {
+            var window = new SequenceWindow(
+                chunk.RecordId,
+                chunk.RecordIndex,
+                chunk.Sequence,
+                chunk.WindowStart,
+                chunk.CoreStart,
+                chunk.CoreEnd,
+                chunk.AtRecordStart,
+                chunk.AtRecordEnd);
+
             List<ThreatReport> threatReports = new List<ThreatReport>();
 
-            foreach (DiseaseMarker disease in diseases)
+            foreach (Orf orf in OrfFinder.Find(window, options))
             {
-                int index = protein.Sequence.IndexOf(disease.Sequence);
-                if (index != -1)
+                foreach (DiseaseMarker disease in diseases)
                 {
-                    ThreatReport report = new ThreatReport
-                    (
-                        threatName: disease.Name,
-                        proteinSequence: protein.Sequence,
-                        globalPosition: protein.GlobalPosition + index * 3,
-                        category: disease.Category
-                    );
-
-                    threatReports.Add(report);
+                    foreach (MotifMatch match in ProteinMotifScanner.Scan(orf, disease.Sequence))
+                    {
+                        threatReports.Add(new ThreatReport
+                        (
+                            runId: chunk.RunId,
+                            threatName: disease.Name,
+                            recordId: chunk.RecordId,
+                            strand: orf.Strand == Strand.Forward ? '+' : '-',
+                            ntStart: match.NucleotideStart + 1,
+                            ntEnd: match.NucleotideEnd,
+                            aaPosition: match.AminoAcidIndex + 1,
+                            proteinSequence: orf.Protein,
+                            category: disease.Category
+                        ));
+                    }
                 }
             }
+
             return threatReports;
         }
     }

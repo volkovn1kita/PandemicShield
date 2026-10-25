@@ -1,7 +1,11 @@
 ﻿using Google.Protobuf;
 using Microsoft.AspNetCore.Mvc;
+using PandemicShield.Api.Extensions;
 using PandemicShield.Contracts;
 using PandemicShield.Contracts.Grpc;
+using PandemicShield.DataAccess.Data;
+using PandemicShield.DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace PandemicShield.Api.Endpoints
 {
@@ -13,7 +17,12 @@ namespace PandemicShield.Api.Endpoints
             app.MapPost("/api/analyze", async (
                 [FromForm(Name = "file")] IFormFile file,
                 [FromForm] ThreatCategory category,
-                DnaParserService.DnaParserServiceClient grpcClient) =>
+                [FromForm] string? nextcladeDataset,
+                [FromForm] string? amrOrganism,
+                DnaParserService.DnaParserServiceClient grpcClient,
+                PandemicDbContext db,
+                AnalysisOptions options,
+                JobPublisher jobs) =>
             {
                 if (file == null || file.Length == 0)
                     return Results.BadRequest("Файл порожній або не вибрано");
@@ -32,36 +41,168 @@ namespace PandemicShield.Api.Endpoints
 
                 peekStream.BaseStream.Position = 0;
 
-                using var call = grpcClient.StreamDnaForParsing();
-                using var stream = file.OpenReadStream();
+                // Nextclade працює з вірусними геномами й потребує цілого файлу, а не вікон.
+                bool runNextclade = !string.IsNullOrWhiteSpace(nextcladeDataset);
+                if (runNextclade && category != ThreatCategory.Virus)
+                    return Results.BadRequest("Nextclade аналізує лише віруси: оберіть категорію Virus.");
+                if (runNextclade && !options.IsKnownDataset(nextcladeDataset!))
+                    return Results.BadRequest($"Невідомий набір даних Nextclade: {nextcladeDataset}. Доступні: {string.Join(", ", options.Datasets)}");
 
-                byte[] buffer = new byte[32 * 1024];
-                int bytesRead;
+                // Бактеріальні збірки завжди аналізує AMRFinderPlus; вид (необов'язковий) вмикає пошук точкових мутацій.
+                bool runAmr = category == ThreatCategory.Bacteria;
+                string? organism = string.IsNullOrWhiteSpace(amrOrganism) ? null : amrOrganism.Trim();
+                if (organism != null && !options.IsKnownOrganism(organism))
+                    return Results.BadRequest($"AMRFinderPlus не знає вид «{organism}». Доступні: {string.Join(", ", options.Organisms)}");
 
-                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                bool keepFile = runNextclade || runAmr;
+
+                var run = new AnalysisRunEntity(file.FileName, category);
+                db.Runs.Add(run);
+                await db.SaveChangesAsync();
+
+                string inputPath = options.RunInputPath(run.Id);
+
+                try
                 {
-                    var byteString = ByteString.CopyFrom(buffer, 0, bytesRead);
+                    using var call = grpcClient.StreamDnaForParsing();
+                    using var stream = file.OpenReadStream();
 
-                    var request = new DnaChunkRequest
+                    // Для Nextclade і AMRFinderPlus файл паралельно зберігається у спільний том, звідки його прочитає воркер.
+                    if (keepFile) Directory.CreateDirectory(Path.GetDirectoryName(inputPath)!);
+                    await using FileStream? copy = keepFile ? File.Create(inputPath) : null;
+
+                    byte[] buffer = new byte[32 * 1024];
+                    int bytesRead;
+
+                    while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        ChunkData = byteString,
-                        CategoryId = (int)category
-                    };
+                        var byteString = ByteString.CopyFrom(buffer, 0, bytesRead);
 
-                    await call.RequestStream.WriteAsync(request);
+                        var request = new DnaChunkRequest
+                        {
+                            ChunkData = byteString,
+                            CategoryId = (int)category,
+                            RunId = run.Id.ToString()
+                        };
+
+                        await call.RequestStream.WriteAsync(request);
+                        if (copy != null) await copy.WriteAsync(buffer.AsMemory(0, bytesRead));
+                    }
+
+                    if (copy != null) await copy.FlushAsync();
+
+                    await call.RequestStream.CompleteAsync();
+
+                    var response = await call.ResponseAsync;
+
+                    run.MarkStreamed(response.RecordCount, response.BaseCount, response.InvalidSymbolCount,
+                        response.ChunkProcessed, response.Message);
+                    if (runNextclade) run.RequestNextclade(nextcladeDataset!);
+                    if (runAmr) run.RequestAmr(organism);
+                    await db.SaveChangesAsync();
+
+                    if (runNextclade)
+                    {
+                        await jobs.PublishAsync(JobPublisher.NextcladeQueue, new NextcladeJobMessage
+                        {
+                            RunId = run.Id,
+                            FilePath = inputPath,
+                            Dataset = nextcladeDataset!
+                        });
+                    }
+
+                    if (runAmr)
+                    {
+                        await jobs.PublishAsync(JobPublisher.AmrFinderQueue, new AmrJobMessage
+                        {
+                            RunId = run.Id,
+                            FilePath = inputPath,
+                            Organism = organism
+                        });
+                    }
+
+                    return Results.Ok(new
+                    {
+                        RunId = run.Id,
+                        Message = response.Message,
+                        ChunkProcessed = response.ChunkProcessed,
+                        RecordCount = response.RecordCount,
+                        BaseCount = response.BaseCount,
+                        InvalidSymbolCount = response.InvalidSymbolCount,
+                        NextcladeDataset = runNextclade ? nextcladeDataset : null,
+                        AmrOrganism = runAmr ? organism : null
+                    });
                 }
-
-                await call.RequestStream.CompleteAsync();
-
-                var response = await call.ResponseAsync;
-
-                return Results.Ok(new
+                catch (Exception ex)
                 {
-                    Message = response.Message,
-                    ChunkProcessed = response.ChunkProcessed
-                });
+                    run.MarkFailed(ex.Message);
+                    await db.SaveChangesAsync();
+                    throw;
+                }
             })
             .DisableAntiforgery();
+
+            // Повторний аналіз уже завантаженого файлу (наприклад, з новішою версією набору даних).
+            app.MapPost("/api/runs/{id}/nextclade", async (
+                Guid id,
+                NextcladeRerunRequest request,
+                PandemicDbContext db,
+                AnalysisOptions options,
+                JobPublisher jobs) =>
+            {
+                var run = await db.Runs.FindAsync(id);
+                if (run == null) return Results.NotFound();
+                if (!options.IsKnownDataset(request.Dataset))
+                    return Results.BadRequest($"Невідомий набір даних Nextclade: {request.Dataset}");
+
+                string inputPath = options.RunInputPath(run.Id);
+                if (!File.Exists(inputPath))
+                    return Results.Conflict("Файл цього запуску не збережено: Nextclade для нього не запитували.");
+
+                await db.Mutations.Where(m => m.RunId == id).ExecuteDeleteAsync();
+                await db.SequenceResults.Where(s => s.RunId == id).ExecuteDeleteAsync();
+                await db.Threats.Where(t => t.RunId == id && t.Source == ThreatAlertEntity.NextcladeSource).ExecuteDeleteAsync();
+
+                run.RequestNextclade(request.Dataset);
+                await db.SaveChangesAsync();
+
+                await jobs.PublishAsync(JobPublisher.NextcladeQueue,
+                    new NextcladeJobMessage { RunId = run.Id, FilePath = inputPath, Dataset = request.Dataset });
+                return Results.Accepted($"/api/runs/{id}/sequences");
+            });
+
+            // Повторний аналіз AMRFinderPlus (наприклад, з іншим видом або після оновлення бази).
+            app.MapPost("/api/runs/{id}/amrfinder", async (
+                Guid id,
+                AmrRerunRequest request,
+                PandemicDbContext db,
+                AnalysisOptions options,
+                JobPublisher jobs) =>
+            {
+                var run = await db.Runs.FindAsync(id);
+                if (run == null) return Results.NotFound();
+
+                string? organism = string.IsNullOrWhiteSpace(request.Organism) ? null : request.Organism.Trim();
+                if (organism != null && !options.IsKnownOrganism(organism))
+                    return Results.BadRequest($"AMRFinderPlus не знає вид «{organism}».");
+
+                string inputPath = options.RunInputPath(run.Id);
+                if (!File.Exists(inputPath))
+                    return Results.Conflict("Файл цього запуску не збережено.");
+
+                await db.AmrHits.Where(h => h.RunId == id).ExecuteDeleteAsync();
+                await db.Threats.Where(t => t.RunId == id && t.Source == ThreatAlertEntity.AmrFinderSource).ExecuteDeleteAsync();
+
+                run.RequestAmr(organism);
+                await db.SaveChangesAsync();
+
+                await jobs.PublishAsync(JobPublisher.AmrFinderQueue, new AmrJobMessage { RunId = run.Id, FilePath = inputPath, Organism = organism });
+                return Results.Accepted($"/api/runs/{id}/amr");
+            });
         }
+
+        public sealed record NextcladeRerunRequest(string Dataset);
+
+        public sealed record AmrRerunRequest(string? Organism);
     }
 }

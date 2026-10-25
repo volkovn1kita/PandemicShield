@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PandemicShield.Contracts\PandemicShield.Contracts.csproj" />
+    <ProjectReference Include="..\PandemicShield.Bio\PandemicShield.Bio.csproj" />
   </ItemGroup>
 
 </Project>
