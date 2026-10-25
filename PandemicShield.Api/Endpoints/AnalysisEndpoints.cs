@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using PandemicShield.Contracts;
 using PandemicShield.Contracts.Grpc;
+using PandemicShield.DataAccess.Data;
+using PandemicShield.DataAccess.Entities;
 
 namespace PandemicShield.Api.Endpoints
 {
@@ -13,7 +15,8 @@ namespace PandemicShield.Api.Endpoints
             app.MapPost("/api/analyze", async (
                 [FromForm(Name = "file")] IFormFile file,
                 [FromForm] ThreatCategory category,
-                DnaParserService.DnaParserServiceClient grpcClient) =>
+                DnaParserService.DnaParserServiceClient grpcClient,
+                PandemicDbContext db) =>
             {
                 if (file == null || file.Length == 0)
                     return Results.BadRequest("Файл порожній або не вибрано");
@@ -32,34 +35,56 @@ namespace PandemicShield.Api.Endpoints
 
                 peekStream.BaseStream.Position = 0;
 
-                using var call = grpcClient.StreamDnaForParsing();
-                using var stream = file.OpenReadStream();
+                var run = new AnalysisRunEntity(file.FileName, category);
+                db.Runs.Add(run);
+                await db.SaveChangesAsync();
 
-                byte[] buffer = new byte[32 * 1024];
-                int bytesRead;
-
-                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                try
                 {
-                    var byteString = ByteString.CopyFrom(buffer, 0, bytesRead);
+                    using var call = grpcClient.StreamDnaForParsing();
+                    using var stream = file.OpenReadStream();
 
-                    var request = new DnaChunkRequest
+                    byte[] buffer = new byte[32 * 1024];
+                    int bytesRead;
+
+                    while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        ChunkData = byteString,
-                        CategoryId = (int)category
-                    };
+                        var byteString = ByteString.CopyFrom(buffer, 0, bytesRead);
 
-                    await call.RequestStream.WriteAsync(request);
+                        var request = new DnaChunkRequest
+                        {
+                            ChunkData = byteString,
+                            CategoryId = (int)category,
+                            RunId = run.Id.ToString()
+                        };
+
+                        await call.RequestStream.WriteAsync(request);
+                    }
+
+                    await call.RequestStream.CompleteAsync();
+
+                    var response = await call.ResponseAsync;
+
+                    run.MarkStreamed(response.RecordCount, response.BaseCount, response.InvalidSymbolCount,
+                        response.ChunkProcessed, response.Message);
+                    await db.SaveChangesAsync();
+
+                    return Results.Ok(new
+                    {
+                        RunId = run.Id,
+                        Message = response.Message,
+                        ChunkProcessed = response.ChunkProcessed,
+                        RecordCount = response.RecordCount,
+                        BaseCount = response.BaseCount,
+                        InvalidSymbolCount = response.InvalidSymbolCount
+                    });
                 }
-
-                await call.RequestStream.CompleteAsync();
-
-                var response = await call.ResponseAsync;
-
-                return Results.Ok(new
+                catch (Exception ex)
                 {
-                    Message = response.Message,
-                    ChunkProcessed = response.ChunkProcessed
-                });
+                    run.MarkFailed(ex.Message);
+                    await db.SaveChangesAsync();
+                    throw;
+                }
             })
             .DisableAntiforgery();
         }

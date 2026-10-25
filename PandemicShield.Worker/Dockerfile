@@ -4,6 +4,7 @@ WORKDIR /src
 
 COPY ["PandemicShield.Worker/PandemicShield.Worker.csproj", "PandemicShield.Worker/"]
 COPY ["PandemicShield.Contracts/PandemicShield.Contracts.csproj", "PandemicShield.Contracts/"]
+COPY ["PandemicShield.Bio/PandemicShield.Bio.csproj", "PandemicShield.Bio/"]
 COPY ["PandemicShield.DataAccess/PandemicShield.DataAccess.csproj", "PandemicShield.DataAccess/"]
 
 RUN dotnet restore "PandemicShield.Worker/PandemicShield.Worker.csproj"

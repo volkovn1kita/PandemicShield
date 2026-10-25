@@ -1,6 +1,6 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Text;
+using PandemicShield.Bio;
 using PandemicShield.Contracts;
 using System.Text.Json;
 using PandemicShield.Worker.Services;
@@ -12,7 +12,11 @@ namespace PandemicShield.Worker
     internal class Program
     {
         private static readonly HttpClient client = new HttpClient();
-      
+        private static readonly TimeSpan DictionaryTtl = TimeSpan.FromSeconds(15);
+
+        private static List<DiseaseMarker> diseases = new List<DiseaseMarker>();
+        private static DateTime diseasesLoadedAt = DateTime.MinValue;
+
         private static async Task<List<DiseaseMarker>> GetDiseaseAsync()
         {
             string apiUrl = Environment.GetEnvironmentVariable("API_URL") ?? "http://localhost:5020";
@@ -24,11 +28,42 @@ namespace PandemicShield.Worker
             return dictionary ?? new List<DiseaseMarker>();
         }
 
+        // Словник перечитується не частіше, ніж раз на DictionaryTtl, тож зміни через CRUD
+        // починають діяти без перезапуску Worker.
+        private static async Task<List<DiseaseMarker>> GetCachedDiseasesAsync()
+        {
+            if (DateTime.UtcNow - diseasesLoadedAt < DictionaryTtl) return diseases;
+
+            try
+            {
+                diseases = await GetDiseaseAsync();
+                diseasesLoadedAt = DateTime.UtcNow;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"Не вдалося оновити словник маркерів, використовую попередній: {ex.Message}");
+            }
+            return diseases;
+        }
+
+        private static OrfFinderOptions ReadOrfOptions()
+        {
+            int minLength = int.TryParse(Environment.GetEnvironmentVariable("ORF_MIN_LENGTH"), out int value) ? value : 75;
+            int codeId = int.TryParse(Environment.GetEnvironmentVariable("GENETIC_CODE"), out int code) ? code : 1;
+
+            return new OrfFinderOptions
+            {
+                MinNucleotideLength = minLength,
+                GeneticCode = GeneticCode.FromId(codeId)
+            };
+        }
+
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            var diseases = await GetDiseaseAsync();
+            var orfOptions = ReadOrfOptions();
+            await GetCachedDiseasesAsync();
 
             string rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
 
@@ -49,39 +84,30 @@ namespace PandemicShield.Worker
                 exclusive: false);
 
             await channel.BasicQosAsync(prefetchCount: 1, prefetchSize: 0, global: false);
-            
+
             var consumer = new AsyncEventingBasicConsumer(channel);
 
             consumer.ReceivedAsync += async (model, ea) =>
             {
-                var body = ea.Body.ToArray();
-                string dnaChunk = Encoding.UTF8.GetString(body);
-
-                DnaChunkMessage? dnaChunkMessage = JsonSerializer.Deserialize<DnaChunkMessage>(dnaChunk);
+                DnaChunkMessage? dnaChunkMessage = JsonSerializer.Deserialize<DnaChunkMessage>(ea.Body.Span);
                 if (dnaChunkMessage == null)
                 {
                     throw new Exception("Cannot convert chunk");
                 }
 
-                var foundProteins = TranslationService.FindProteins(dnaChunkMessage.Sequence, dnaChunkMessage.StartPosition);
-                var relevantDiseases = diseases.Where(d => d.Category == dnaChunkMessage.Category).ToList();
-                foreach (ProteinData protein in foundProteins)
-                {
-                    List<ThreatReport> reports = MutationScannerService.ScanProtein(protein, relevantDiseases);
-                    
-                    if (reports != null)
-                    {
-                        foreach (ThreatReport report in reports)
-                        {
-                            var json = JsonSerializer.Serialize(report);
-                            byte[] reportBody = Encoding.UTF8.GetBytes(json);
+                var allDiseases = await GetCachedDiseasesAsync();
+                var relevantDiseases = allDiseases.Where(d => d.Category == dnaChunkMessage.Category).ToList();
 
-                            await channel.BasicPublishAsync(
-                                exchange: "",
-                                routingKey: "threat_alerts",
-                                body: reportBody);
-                        }
-                    }
+                List<ThreatReport> reports = MutationScannerService.ScanChunk(dnaChunkMessage, relevantDiseases, orfOptions);
+
+                foreach (ThreatReport report in reports)
+                {
+                    byte[] reportBody = JsonSerializer.SerializeToUtf8Bytes(report);
+
+                    await channel.BasicPublishAsync(
+                        exchange: "",
+                        routingKey: "threat_alerts",
+                        body: reportBody);
                 }
 
                 await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);

@@ -3,7 +3,6 @@ using PandemicShield.DataAccess.Entities;
 using PandemicShield.Contracts;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Text;
 using System.Text.Json;
 
 namespace PandemicShield.Aggregator
@@ -28,17 +27,19 @@ namespace PandemicShield.Aggregator
 
             consumer.ReceivedAsync += async (model, ea) => {
 
-                byte[] body = ea.Body.ToArray();
-                var json = Encoding.UTF8.GetString(body);
-
-                ThreatReport? report = JsonSerializer.Deserialize<ThreatReport>(json);
+                ThreatReport? report = JsonSerializer.Deserialize<ThreatReport>(ea.Body.Span);
 
                 if (report != null)
                 {
                     ThreatAlertEntity alertEntity = new ThreatAlertEntity(
+                        runId: report.RunId == Guid.Empty ? null : report.RunId,
                         threatName: report.ThreatName,
+                        recordId: report.RecordId,
+                        strand: report.Strand,
+                        ntStart: report.NtStart,
+                        ntEnd: report.NtEnd,
+                        aaPosition: report.AaPosition,
                         proteinSequence: report.ProteinSequence,
-                        globalPosition: report.GlobalPosition,
                         category: report.Category);
 
                     using var dbContext = new PandemicDbContext();

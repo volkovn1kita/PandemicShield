@@ -1,8 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using PandemicShield.DataAccess.Entities;
 
 namespace PandemicShield.DataAccess.Data
@@ -11,10 +7,20 @@ namespace PandemicShield.DataAccess.Data
     {
         public DbSet<ThreatAlertEntity> Threats { get; set; }
         public DbSet<ReferenceMutationEntity> Mutation { get; set; }
+        public DbSet<AnalysisRunEntity> Runs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ThreatAlertEntity>().Property(e => e.Category).HasConversion<string>();
+            modelBuilder.Entity<ThreatAlertEntity>().HasIndex(e => e.RunId);
+            modelBuilder.Entity<ThreatAlertEntity>()
+                .HasOne<AnalysisRunEntity>()
+                .WithMany()
+                .HasForeignKey(e => e.RunId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.Category).HasConversion<string>();
+            modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.Status).HasConversion<string>();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

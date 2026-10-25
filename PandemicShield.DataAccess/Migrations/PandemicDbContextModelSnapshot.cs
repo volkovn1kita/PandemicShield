@@ -17,10 +17,54 @@ namespace PandemicShield.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.AnalysisRunEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("BaseCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ChunkCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("InvalidSymbolCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("StreamedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Runs");
+                });
 
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.ReferenceMutationEntity", b =>
                 {
@@ -50,6 +94,9 @@ namespace PandemicShield.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("AaPosition")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("text");
@@ -57,12 +104,25 @@ namespace PandemicShield.DataAccess.Migrations
                     b.Property<DateTime>("DetectedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("GlobalPosition")
-                        .HasColumnType("integer");
+                    b.Property<long>("NtEnd")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("NtStart")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("ProteinSequence")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("RecordId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<char>("Strand")
+                        .HasColumnType("character(1)");
 
                     b.Property<string>("ThreatName")
                         .IsRequired()
@@ -70,7 +130,17 @@ namespace PandemicShield.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RunId");
+
                     b.ToTable("Threats");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.ThreatAlertEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.AnalysisRunEntity", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

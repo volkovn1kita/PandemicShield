@@ -12,10 +12,14 @@ service DnaParserService{
 message DnaChunkRequest {
 	bytes chunk_data = 1;
 	int32 category_id = 2;
+	string run_id = 3;
 }
 
 message DnaProcessResponse {
 	bool success = 1;
 	string message = 2;
 	int32 chunk_processed = 3;
+	int32 record_count = 4;
+	int64 base_count = 5;
+	int64 invalid_symbol_count = 6;
 }

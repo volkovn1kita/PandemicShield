@@ -441,7 +441,7 @@ class _AnalysisDashboardState extends State<AnalysisDashboard> {
                             children: [
                               Expanded(flex: 1, child: Text('TYPE', style: TextStyle(color: textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1))),
                               Expanded(flex: 3, child: Text('THREAT IDENTIFIER', style: TextStyle(color: textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1))),
-                              Expanded(flex: 2, child: Text('GLOBAL OFFSET', style: TextStyle(color: textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1))),
+                              Expanded(flex: 2, child: Text('LOCATION (1-BASED)', style: TextStyle(color: textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1))),
                               Expanded(flex: 2, child: Text('TIME', style: TextStyle(color: textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1))),
                               SizedBox(width: 40), 
                             ],
@@ -492,7 +492,7 @@ class _AnalysisDashboardState extends State<AnalysisDashboard> {
                                           )
                                         ),
                                         Expanded(flex: 3, child: Text(threat['threatName'], style: const TextStyle(fontWeight: FontWeight.w600, color: textMain))),
-                                        Expanded(flex: 2, child: Text(threat['globalPosition'].toString(), style: const TextStyle(fontFamily: 'Consolas', color: primaryTeal, fontWeight: FontWeight.w600))),
+                                        Expanded(flex: 2, child: Text('${threat['recordId']}:${threat['ntStart']}-${threat['ntEnd']} (${threat['strand']})', style: const TextStyle(fontFamily: 'Consolas', color: primaryTeal, fontWeight: FontWeight.w600))),
                                         Expanded(flex: 2, child: Text(time, style: const TextStyle(fontFamily: 'Consolas', color: textMuted, fontSize: 12))),
                                         SizedBox(
                                           width: 40, 
