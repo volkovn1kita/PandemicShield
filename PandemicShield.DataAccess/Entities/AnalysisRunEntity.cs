@@ -10,6 +10,15 @@ namespace PandemicShield.DataAccess.Entities
         Failed
     }
 
+    public enum NextcladeStatus
+    {
+        NotRequested,
+        Queued,
+        Running,
+        Completed,
+        Failed
+    }
+
     /// <summary>
     /// Один запуск аналізу одного файлу. Прив'язує знахідки до зразка, з якого вони прийшли.
     /// </summary>
@@ -26,6 +35,12 @@ namespace PandemicShield.DataAccess.Entities
         public long InvalidSymbolCount { get; private set; }
         public int ChunkCount { get; private set; }
         public string? Message { get; private set; }
+
+        public NextcladeStatus NextcladeStatus { get; private set; }
+        public string? NextcladeDataset { get; private set; }
+        public string? NextcladeMessage { get; private set; }
+        public DateTime? NextcladeCompletedAt { get; private set; }
+        public int SequencesAnalyzed { get; private set; }
 
         public AnalysisRunEntity(string fileName, ThreatCategory category)
         {
@@ -45,6 +60,29 @@ namespace PandemicShield.DataAccess.Entities
             InvalidSymbolCount = invalidSymbolCount;
             ChunkCount = chunkCount;
             Message = message;
+        }
+
+        public void RequestNextclade(string dataset)
+        {
+            NextcladeStatus = NextcladeStatus.Queued;
+            NextcladeDataset = dataset;
+        }
+
+        public void MarkNextcladeRunning() => NextcladeStatus = NextcladeStatus.Running;
+
+        public void MarkNextcladeCompleted(int sequencesAnalyzed, string message)
+        {
+            NextcladeStatus = NextcladeStatus.Completed;
+            NextcladeCompletedAt = DateTime.UtcNow;
+            SequencesAnalyzed = sequencesAnalyzed;
+            NextcladeMessage = message;
+        }
+
+        public void MarkNextcladeFailed(string message)
+        {
+            NextcladeStatus = NextcladeStatus.Failed;
+            NextcladeCompletedAt = DateTime.UtcNow;
+            NextcladeMessage = message;
         }
 
         public void MarkFailed(string message)

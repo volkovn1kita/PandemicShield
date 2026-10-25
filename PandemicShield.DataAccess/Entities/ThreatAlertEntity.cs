@@ -3,8 +3,15 @@ using System;
 
 namespace PandemicShield.DataAccess.Entities
 {
+    /// <summary>
+    /// Сповіщення про знайдений маркер. Source визначає систему координат:
+    /// "orf-motif" — координати в самому записі FASTA; "nextclade" — у референсі набору даних (наприклад, MN908947).
+    /// </summary>
     public class ThreatAlertEntity
     {
+        public const string OrfMotifSource = "orf-motif";
+        public const string NextcladeSource = "nextclade";
+
         public Guid Id { get; private set; }
         public Guid? RunId { get; private set; }
         public string ThreatName { get; private set; }
@@ -20,6 +27,11 @@ namespace PandemicShield.DataAccess.Entities
         public string ProteinSequence { get; private set; }
         public ThreatCategory Category { get; private set; }
         public DateTime DetectedAt { get; private set; }
+        public string Source { get; private set; } = OrfMotifSource;
+
+        // Позначення варіанта для сповіщень Nextclade (S:N501Y, clade:Delta) і посилання на послідовність.
+        public string? Variant { get; private set; }
+        public Guid? SequenceResultId { get; private set; }
 
         public ThreatAlertEntity(
             Guid? runId,
@@ -43,6 +55,24 @@ namespace PandemicShield.DataAccess.Entities
             ProteinSequence = proteinSequence;
             Category = category;
             DetectedAt = DateTime.UtcNow;
+        }
+
+        public static ThreatAlertEntity FromNextclade(
+            Guid runId,
+            Guid sequenceResultId,
+            string threatName,
+            string seqName,
+            string variant,
+            long ntStart,
+            long ntEnd,
+            int aaPosition)
+        {
+            var alert = new ThreatAlertEntity(runId, threatName, seqName, '+', ntStart, ntEnd, aaPosition,
+                string.Empty, ThreatCategory.Virus);
+            alert.Source = NextcladeSource;
+            alert.Variant = variant;
+            alert.SequenceResultId = sequenceResultId;
+            return alert;
         }
     }
 }

@@ -71,7 +71,24 @@ services:
       - rabbitmq
       - postgres
 
-  # 6. Центр Керування (API)
+  # 6. Nextclade-воркер (клади, лінії, QC і мутації вірусних геномів)
+  nextclade:
+    build:
+      context: .
+      dockerfile: PandemicShield.Nextclade/Dockerfile
+    container_name: pandemic_nextclade
+    restart: always
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+    volumes:
+      - run_data:/data
+    depends_on:
+      - rabbitmq
+      - postgres
+      - api
+
+  # 7. Центр Керування (API)
   api:
     build:
       context: .
@@ -84,6 +101,17 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ParserUrl=http://parser:8080 # Адреса Парсера у внутрішній мережі!
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+      - RABBITMQ_HOST=rabbitmq
+      # Спільний том для файлів запусків (їх читає Nextclade-воркер)
+      - DATA_DIR=/data
+      # Набори даних Nextclade, встановлені в образі воркера (див. PandemicShield.Nextclade/Dockerfile)
+      - NEXTCLADE_DATASETS=nextstrain/sars-cov-2/wuhan-hu-1/orfs,nextstrain/flu/h1n1pdm/ha/CY121680,nextstrain/flu/h3n2/ha/EPI1857216,nextstrain/rsv/a/EPI_ISL_412866,nextstrain/rsv/b/EPI_ISL_1653999,nextstrain/mpox/all-clades
+    volumes:
+      - run_data:/data
     depends_on:
       - parser
       - postgres
+      - rabbitmq
+
+volumes:
+  run_data:

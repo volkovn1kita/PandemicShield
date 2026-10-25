@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PandemicShield.Contracts;
 using PandemicShield.Contracts.Grpc;
 using PandemicShield.DataAccess.Data;
@@ -6,6 +6,7 @@ using PandemicShield.DataAccess.Entities;
 using Google.Protobuf;
 using Microsoft.AspNetCore.Mvc;
 using PandemicShield.Api.Endpoints;
+using PandemicShield.Api.Extensions;
 using Microsoft.AspNetCore.Http.Features;
 
 namespace PandemicShield.Api
@@ -19,6 +20,9 @@ namespace PandemicShield.Api
             builder.Services.AddDbContext<PandemicDbContext>();
 
             builder.Services.AddOpenApi();
+
+            builder.Services.AddSingleton(NextcladeOptions.FromEnvironment());
+            builder.Services.AddSingleton<NextcladeJobPublisher>();
 
             var parserUrl = builder.Configuration["ParserUrl"] ?? "https://localhost:56627";
 
@@ -55,6 +59,7 @@ namespace PandemicShield.Api
             app.MapThreatEndpoints();
             app.MapDictionaryEndpoints();
             app.MapAnalysisEndpoints();
+            app.MapNextcladeEndpoints();
 
             app.Run();
         }
