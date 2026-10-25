@@ -130,12 +130,13 @@
 
 ## 6. Наступні кроки
 
-### Етап 2: оркестрація (1–2 місяці)
-1. `Worker.Nextclade`: контейнер з Nextclade CLI. Зберігати мутації з координатами, кладу та QC.
-2. Модель маркера як варіанта: `{organism, reference, gene, position, ref, alt, hgvs, source}`
-   замість рядка білка (див. `BIOLOGY_REVIEW.md`, 6.2). Правила сповіщень поверх результатів Nextclade.
-3. SignalR: прогрес запуску (вікон оброблено / усього) замість polling.
-4. Підтримка FASTQ на вході (minimap2 + ivar або Nextclade на консенсусі).
+### Етап 2: оркестрація
+1. ✅ `PandemicShield.Nextclade`: контейнер з Nextclade CLI. Зберігаються мутації з координатами, клада, лінія та QC.
+2. ✅ Маркер як варіант (`S:N501Y`, `clade:Delta`, `lineage:BA.2.86*`) і правила сповіщень поверх
+   результатів Nextclade.
+3. ✅ Новий інтерфейс (УКР/EN, сторінка «Зразки», карта геному). Деталі — у [`STAGE2_NEXTCLADE.md`](STAGE2_NEXTCLADE.md).
+4. SignalR: прогрес запуску замість опитування.
+5. Підтримка FASTQ на вході (minimap2 + ivar → консенсус → Nextclade) і `nextclade sort` для змішаних файлів.
 
 ### Етап 3: дані та візуалізація
 1. Імпорт результатів AMRFinderPlus з NCBI Pathogen Detection (FTP або BigQuery). Карта генів

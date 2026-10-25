@@ -183,6 +183,22 @@
 
 ---
 
+## 7.1. Що повертає Nextclade і як це читати
+
+| Поле | Що означає | Приклад |
+|---|---|---|
+| **Клада** (Nextstrain) | Велика гілка дерева, назва за роком і літерою | `21J` = `21J (Delta)`, `23I (BA.2.86)` |
+| **Лінія Pango** | Дрібніша гілка; назви скорочуються псевдонімами | `JN.3.3` — це `BA.2.86.1.3.3`; `EG.5.1` — це `XBB.1.9.2.5.1` |
+| **QC** | Чи можна довіряти геному: пропуски (N), підозрілі кластери мутацій, зсуви рамки, стоп-кодони | `good` / `mediocre` / `bad` |
+| **Покриття** | Яка частка референсу прочитана | 99.4% |
+| **Приватні мутації** | Мутації, яких немає в найближчого вузла дерева: можлива нова лінія або помилка секвенування | — |
+
+Дві пастки, які закріплено в тестах:
+- **Одну й ту саму делецію можна вирівняти по-різному.** Delta: «E156G + del157-158» = `E156-, F157-, R158G` у Nextclade.
+- **Одна мутація — не лінія.** D614G є майже в усіх геномах після 2020 року; правило на неї нічого не каже.
+
+---
+
 ## 8. Карта «біологія → код»
 
 | Поняття | Де в коді |
@@ -198,6 +214,10 @@
 | Зразок / запуск аналізу | `PandemicShield.DataAccess/Entities/AnalysisRunEntity.cs` |
 | Перевірені маркери | `PandemicShield.Api/Extensions/DbSeeder.cs` |
 | Перевірка на реальному геномі | `PandemicShield.Bio.Tests/SarsCov2ReferenceTests.cs` |
+| Позначення варіантів (`S:N501Y`, `clade:Delta`) | `PandemicShield.Bio/Variants/VariantPattern.cs` |
+| Запуск Nextclade, розбір NDJSON, правила | `PandemicShield.Nextclade/` (`NextcladeRunner`, `Results/`, `Rules/VariantMatcher.cs`) |
+| Геноми, мутації, правила в БД | `SequenceResultEntity`, `MutationEntity`, `VariantMarkerEntity` |
+| Карта геному в UI | `pandemic_shield_desktop/lib/widgets.dart` (`GenomeMap`) |
 
 ---
 
