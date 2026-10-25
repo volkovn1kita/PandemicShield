@@ -29,6 +29,7 @@ namespace PandemicShield.Api.Reports
         public string Bases => T("Нуклеотидів", "Nucleotides");
         public string Source => T("Джерело", "Source");
         public string Generated => T("Сформовано", "Generated");
+        public string Reads => T("Із сирих прочитань", "From raw reads");
         public string Virus => T("Вірус", "Virus");
         public string Bacterium => T("Бактерія", "Bacterium");
         public string Human => T("Людина", "Human");

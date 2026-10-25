@@ -174,6 +174,9 @@ namespace PandemicShield.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("ReadsSummary")
+                        .HasColumnType("text");
+
                     b.Property<int>("RecordCount")
                         .HasColumnType("integer");
 
@@ -237,10 +240,17 @@ namespace PandemicShield.DataAccess.Migrations
                     b.Property<int>("FailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Message")
                         .HasColumnType("text");
 
                     b.Property<string>("NextcladeDataset")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Platform")
                         .HasColumnType("text");
 
                     b.Property<string>("Status")

@@ -75,6 +75,28 @@ class Api {
     return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }
 
+  /// Сирі прочитання FASTQ (R1/R2 Illumina або файли Nanopore одного зразка): консенсус чи збірку робить воркер Reads.
+  static Future<Map<String, dynamic>> uploadReads({
+    required List<String> filePaths,
+    required int category,
+    required String platform,
+    String? nextcladeDataset,
+    String? amrOrganism,
+  }) async {
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/reads'))
+      ..fields['category'] = '$category'
+      ..fields['platform'] = platform;
+    for (final path in filePaths) {
+      request.files.add(await http.MultipartFile.fromPath('files', path));
+    }
+    if (nextcladeDataset != null) request.fields['nextcladeDataset'] = nextcladeDataset;
+    if (amrOrganism != null) request.fields['amrOrganism'] = amrOrganism;
+
+    final response = await http.Response.fromStream(await request.send());
+    _ensureSuccess(response);
+    return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+  }
+
   static void _ensureSuccess(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     String message = utf8.decode(response.bodyBytes);

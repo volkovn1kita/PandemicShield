@@ -20,7 +20,8 @@ namespace PandemicShield.Api.Extensions
             string? NextcladeDataset,
             string? AmrOrganism,
             Guid? ImportId = null,
-            string? SourceAccession = null);
+            string? SourceAccession = null,
+            string? ReadsSummary = null);
 
         private readonly DnaParserService.DnaParserServiceClient _grpc;
         private readonly AnalysisOptions _options;
@@ -62,7 +63,7 @@ namespace PandemicShield.Api.Extensions
             string? organism = string.IsNullOrWhiteSpace(request.AmrOrganism) ? null : request.AmrOrganism.Trim();
             bool keepFile = runNextclade || runAmr;
 
-            var run = new AnalysisRunEntity(request.FileName, request.Category, request.ImportId, request.SourceAccession);
+            var run = new AnalysisRunEntity(request.FileName, request.Category, request.ImportId, request.SourceAccession, request.ReadsSummary);
             db.Runs.Add(run);
             await db.SaveChangesAsync(cancellationToken);
 

@@ -17,5 +17,7 @@
   <Project Path="PandemicShield.Nextclade.Tests/PandemicShield.Nextclade.Tests.csproj" />
   <Project Path="PandemicShield.Nextclade/PandemicShield.Nextclade.csproj" />
   <Project Path="PandemicShield.Parser/PandemicShield.Parser.csproj" />
+  <Project Path="PandemicShield.Reads.Tests/PandemicShield.Reads.Tests.csproj" />
+  <Project Path="PandemicShield.Reads/PandemicShield.Reads.csproj" />
   <Project Path="PandemicShield.Worker/PandemicShield.Worker.csproj" />
 </Solution>

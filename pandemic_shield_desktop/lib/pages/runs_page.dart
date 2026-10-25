@@ -146,16 +146,40 @@ class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
   // За замовчуванням — автовибір: користувачу не треба знати, який вірус у файлі.
   String? _dataset = autoDataset;
   String? _organism;
-  PlatformFile? _file;
+  List<PlatformFile> _files = [];
+  String _platform = 'illumina';
   bool _uploading = false;
 
+  static final _fastqName = RegExp(r'\.(fastq|fq)(\.gz)?$', caseSensitive: false);
+
+  PlatformFile? get _file => _files.firstOrNull;
+
+  /// Сирі прочитання (FASTQ) замість готового геному: консенсус або збірку зробить воркер Reads.
+  bool get _isFastq => _files.isNotEmpty && _files.every((f) => _fastqName.hasMatch(f.name));
+
   Future<void> _pick() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['fasta', 'fa', 'fna', 'txt']);
-    if (result != null) setState(() => _file = result.files.first);
+    // Кілька файлів — лише для FASTQ: пара R1/R2 Illumina або частини одного зразка Nanopore.
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowMultiple: true,
+      allowedExtensions: ['fasta', 'fa', 'fna', 'txt', 'fastq', 'fq', 'gz'],
+    );
+    if (result == null) return;
+    final files = result.files;
+    final fastq = files.every((f) => _fastqName.hasMatch(f.name));
+    if (!fastq && files.length > 1) {
+      if (mounted) showMessage(context, context.tr('upload.oneFasta'), error: true);
+      return;
+    }
+    setState(() {
+      _files = files..sort((a, b) => a.name.compareTo(b.name));
+      if (fastq && _category == 1) _category = 0;
+    });
   }
 
   Future<void> _start() async {
     if (_file?.path == null) return;
+    if (_isFastq) return _startReads();
     setState(() => _uploading = true);
     final dataset = _category == 0 ? _dataset : null;
     final bacterial = _category == 2;
@@ -187,6 +211,33 @@ class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
     }
   }
 
+  Future<void> _startReads() async {
+    if (_platform == 'illumina' && _files.length > 2) {
+      showMessage(context, context.tr('upload.illuminaPairs'), error: true);
+      return;
+    }
+    setState(() => _uploading = true);
+    try {
+      await Api.uploadReads(
+        filePaths: [for (final f in _files) f.path!],
+        category: _category,
+        platform: _platform,
+        nextcladeDataset: _category == 0 ? _dataset : null,
+        amrOrganism: _category == 2 ? _organism : null,
+      );
+      if (!mounted) return;
+      Navigator.pop(context);
+      showMessage(context, context.tr('upload.sentReads'));
+      widget.store.refresh();
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    } catch (_) {
+      if (mounted) showMessage(context, context.tr('common.connectionFailed'), error: true);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.p;
@@ -206,7 +257,12 @@ class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: ChoiceTabs<int>(
-                  options: [(0, context.tr('common.virus')), (2, context.tr('common.bacteria')), (1, context.tr('common.human'))],
+                  options: [
+                    (0, context.tr('common.virus')),
+                    (2, context.tr('common.bacteria')),
+                    // Прочитання людини не збираються й не картуються: для навчального режиму потрібна готова послідовність.
+                    if (!_isFastq) (1, context.tr('common.human')),
+                  ],
                   value: _category,
                   onChanged: (v) => setState(() => _category = v),
                 ),
@@ -239,20 +295,39 @@ class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
             const SizedBox(height: 18),
             FieldLabel(
               context.tr(_category == 2 ? 'upload.bacteriaFile' : 'upload.file'),
+              hint: context.tr('upload.fastqHint'),
               child: Row(
                 children: [
                   OutlinedButton(onPressed: _uploading ? null : _pick, child: Text(context.tr('upload.pick'))),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _file == null ? '' : '${_file!.name} · ${formatBases(_file!.size).replaceAll('b', 'B')}',
+                      _files.map((f) => '${f.name} · ${formatBases(f.size).replaceAll('b', 'B')}').join('\n'),
                       overflow: TextOverflow.ellipsis,
+                      maxLines: 3,
                       style: mono(context, size: 12.5, color: p.muted),
                     ),
                   ),
                 ],
               ),
             ),
+            if (_isFastq) ...[
+              const SizedBox(height: 18),
+              FieldLabel(
+                context.tr('upload.platform'),
+                hint: context.tr(_category == 2
+                    ? (_platform == 'nanopore' ? 'upload.readsBacteriaOnt' : 'upload.readsBacteriaIllumina')
+                    : 'upload.readsVirus'),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ChoiceTabs<String>(
+                    options: const [('illumina', 'Illumina'), ('nanopore', 'Nanopore')],
+                    value: _platform,
+                    onChanged: (v) => setState(() => _platform = v),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

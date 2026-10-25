@@ -156,7 +156,32 @@ services:
       api:
         condition: service_started
 
-  # 9. Центр Керування (API)
+  # 9. Воркер Reads (FASTQ → консенсус вірусу або збірка бактерії)
+  reads:
+    build:
+      context: .
+      dockerfile: PandemicShield.Reads/Dockerfile
+    container_name: pandemic_reads
+    # Інструменти bioconda (SKESA, Flye) зібрано під linux/amd64; на Apple Silicon Docker запустить їх через емуляцію
+    platform: linux/amd64
+    restart: always
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - DATA_DIR=/data
+      # Пам'ять для SKESA у ГБ: бактеріальний геном з покриттям ~50× вміщається у 8
+      - READS_MEMORY_GB=8
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+    volumes:
+      - run_data:/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+  # 10. Центр Керування (API)
   api:
     build:
       context: .

@@ -17,7 +17,17 @@ namespace PandemicShield.DataAccess.Entities
     /// </summary>
     public class ImportBatchEntity
     {
+        public const string AccessionsKind = "accessions";
+        public const string ArchiveKind = "archive";
+        public const string ReadsKind = "fastq";
+
         public Guid Id { get; private set; }
+
+        /// <summary>Звідки дані: номери NCBI, архів NCBI Datasets або сирі прочитання FASTQ (обробляє воркер Reads).</summary>
+        public string Kind { get; private set; } = AccessionsKind;
+
+        /// <summary>Для FASTQ: illumina або nanopore.</summary>
+        public string? Platform { get; private set; }
         public DateTime CreatedAt { get; private set; }
         public DateTime? CompletedAt { get; private set; }
         public ThreatCategory Category { get; private set; }
@@ -42,6 +52,7 @@ namespace PandemicShield.DataAccess.Entities
         public ImportBatchEntity(ThreatCategory category, string? nextcladeDataset, string? amrOrganism, string accessions, string? archiveName, int total)
         {
             Id = Guid.NewGuid();
+            Kind = archiveName == null ? AccessionsKind : ArchiveKind;
             CreatedAt = DateTime.UtcNow;
             Category = category;
             NextcladeDataset = nextcladeDataset;
@@ -50,6 +61,16 @@ namespace PandemicShield.DataAccess.Entities
             ArchiveName = archiveName;
             Status = ImportStatus.Queued;
             Total = total;
+        }
+
+        /// <summary>Сирі прочитання: файли (R1, R2 або частини Nanopore) — у ArchiveName через кому.</summary>
+        public static ImportBatchEntity ForReads(ThreatCategory category, string? nextcladeDataset, string? amrOrganism,
+            string platform, IReadOnlyList<string> files)
+        {
+            var batch = new ImportBatchEntity(category, nextcladeDataset, amrOrganism, string.Empty, string.Join(", ", files), 1);
+            batch.Kind = ReadsKind;
+            batch.Platform = platform;
+            return batch;
         }
 
         public void MarkRunning(int total)

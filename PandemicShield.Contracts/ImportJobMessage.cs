@@ -10,5 +10,17 @@ namespace PandemicShield.Contracts
     {
         public Guid ImportId { get; set; }
         public string? ArchivePath { get; set; }
+
+        /// <summary>
+        /// FASTA, вже готова воркером Reads з сирих прочитань (консенсус вірусу або збірка бактерії):
+        /// API лише ставить її на аналіз як звичайний запуск.
+        /// </summary>
+        public string? FastaPath { get; set; }
+
+        /// <summary>Для консенсусу вірусу — набір Nextclade, визначений за картуванням (замість «auto» пакета).</summary>
+        public string? Dataset { get; set; }
+
+        public string? RunName { get; set; }
+        public string? ReadsSummary { get; set; }
     }
 }

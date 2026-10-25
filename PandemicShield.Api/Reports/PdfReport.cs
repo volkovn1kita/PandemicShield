@@ -108,6 +108,12 @@ namespace PandemicShield.Api.Reports
                     (t.Source, run.SourceAccession != null ? $"NCBI {run.SourceAccession}" : run.ImportId != null ? "NCBI" : t.File),
                     (t.RunId, run.Id.ToString())
                 ]));
+                if (run.ReadsSummary != null)
+                    column.Item().PaddingTop(6).Text(text =>
+                    {
+                        text.Span($"{t.Reads}: ").FontColor(Muted);
+                        text.Span(run.ReadsSummary).FontSize(8.5f);
+                    });
                 column.Item().PaddingTop(10).Border(0.5f).BorderColor(Border).Padding(8)
                     .Text(t.Disclaimer).FontSize(8).FontColor(Muted);
             });

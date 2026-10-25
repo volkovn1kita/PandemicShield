@@ -73,6 +73,30 @@ bool isSequenceType(Object? value) => value is String && RegExp(r'^\d+$').hasMat
 
 final _stQuery = RegExp(r'^(?:ST)?(\d{1,6})$', caseSensitive: false);
 
+/// Схема PubMLST → вид AMRFinderPlus (обернена до MlstRunner.Schemes): за типом штаму можна підказати вид,
+/// якщо його не вказали (наприклад, для збірки з сирих прочитань).
+const Map<String, String> _schemeOrganism = {
+  'klebsiella': 'Klebsiella_pneumoniae',
+  'koxytoca': 'Klebsiella_oxytoca',
+  'ecoli_achtman_4': 'Escherichia',
+  'abaumannii_2': 'Acinetobacter_baumannii',
+  'paeruginosa': 'Pseudomonas_aeruginosa',
+  'saureus': 'Staphylococcus_aureus',
+  'sepidermidis': 'Staphylococcus_epidermidis',
+  'efaecium': 'Enterococcus_faecium',
+  'efaecalis': 'Enterococcus_faecalis',
+  'ecloacae': 'Enterobacter_cloacae',
+  'cfreundii': 'Citrobacter_freundii',
+  'senterica_achtman_2': 'Salmonella',
+  'campylobacter': 'Campylobacter',
+  'cdifficile': 'Clostridioides_difficile',
+  'neisseria': 'Neisseria_meningitidis',
+  'spneumoniae': 'Streptococcus_pneumoniae',
+  'spyogenes': 'Streptococcus_pyogenes',
+  'sagalactiae': 'Streptococcus_agalactiae',
+  'vcholerae': 'Vibrio_cholerae',
+};
+
 /// Вид у форматі AMRFinderPlus (Klebsiella_pneumoniae) → «Klebsiella pneumoniae».
 String organismName(String? organism) => organism == null ? '—' : organism.replaceAll('_', ' ');
 
@@ -276,10 +300,50 @@ class _AmrRunViewState extends State<AmrRunView> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
           child: Text(summary, style: TextStyle(fontSize: 12.5, color: p.muted)),
         ),
+        ReadsSummaryLine(run['readsSummary']),
+        _buildSpeciesHint(run),
         _buildMlst(run),
         _buildResistance(alertSymbols),
         _buildHits(alertSymbols),
       ],
+    );
+  }
+
+  /// Вид не вказано: AMRFinderPlus знайшов лише гени, без точкових мутацій виду (gyrA, parC, ompK…).
+  /// Якщо MLST визначив схему, пропонуємо повторити аналіз з відповідним видом.
+  Widget _buildSpeciesHint(dynamic run) {
+    final p = context.p;
+    final suggested = _schemeOrganism[run['mlstScheme']];
+    if (run['amrOrganism'] != null || suggested == null || !widget.store.organisms.contains(suggested)) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(border: Border.all(color: p.border), borderRadius: BorderRadius.circular(6)),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 15, color: p.muted),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              context.tr('amr.speciesHint', {'species': organismName(suggested), 'scheme': run['mlstScheme']}),
+              style: TextStyle(fontSize: 12.5, color: p.muted, height: 1.4),
+            ),
+          ),
+          const SizedBox(width: 10),
+          TextButton(
+            onPressed: () async {
+              try {
+                await Api.post('/runs/${run['id']}/amrfinder', {'organism': suggested});
+                widget.store.refresh();
+                _load();
+              } on ApiException catch (e) {
+                if (mounted) showMessage(context, e.message, error: true);
+              }
+            },
+            child: Text(context.tr('amr.speciesRerun', {'species': organismName(suggested)})),
+          ),
+        ],
+      ),
     );
   }
 

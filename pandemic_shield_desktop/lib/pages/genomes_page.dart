@@ -285,6 +285,7 @@ class _GenomesPageState extends State<GenomesPage> {
                 style: TextStyle(fontSize: 12.5, color: p.muted),
               ),
             ),
+            ReadsSummaryLine(run['readsSummary']),
             TableHeader(columns),
             Expanded(
               child: ListView.builder(

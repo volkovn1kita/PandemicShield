@@ -228,10 +228,11 @@ class _ImportRow extends StatelessWidget {
     final failed = (batch['failedCount'] ?? 0) as int;
     final active = status == ImportsStrip._queued || status == ImportsStrip._running;
     final source = batch['archiveName'] ?? _accessionsPreview(batch['accessions'] as String? ?? '');
+    final bool reads = batch['kind'] == 'fastq';
     final errors = batch['errors'] as String?;
 
     final parts = <String>[
-      context.tr('import.status.$status'),
+      context.tr(reads && status == 1 ? 'import.status.processing' : 'import.status.$status'),
       if (total > 0) context.tr('import.progress', {'done': done + failed, 'total': total}),
       if (failed > 0) context.tr('import.failedSome', {'n': failed}),
       if (batch['message'] != null) batch['message'],
@@ -248,7 +249,7 @@ class _ImportRow extends StatelessWidget {
             SizedBox(
               width: 260,
               child: Text(
-                '${context.tr('import.row')} · ${batch['category'] == 2 ? context.tr('common.bacteria') : context.tr('common.virus')} · $source',
+                '${context.tr(reads ? 'import.rowReads' : 'import.row')} · ${batch['category'] == 2 ? context.tr('common.bacteria') : context.tr('common.virus')} · $source',
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
               ),

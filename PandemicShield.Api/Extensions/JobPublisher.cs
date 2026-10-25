@@ -12,6 +12,7 @@ namespace PandemicShield.Api.Extensions
         public const string AmrFinderQueue = "amrfinder_jobs";
         public const string MlstQueue = "mlst_jobs";
         public const string ImportQueue = "import_jobs";
+        public const string ReadsQueue = "reads_jobs";
         public const string SurveillanceQueue = "surveillance_jobs";
 
         private readonly SemaphoreSlim _lock = new(1, 1);

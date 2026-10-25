@@ -1,0 +1,2 @@
+file	format	type	num_seqs	sum_len	min_len	avg_len	max_len	Q1	Q2	Q3	sum_gap	N50	N50_num	Q20(%)	Q30(%)	AvgQual	GC(%)	sum_n
+delta_ont.fastq.gz	FASTQ	DNA	353	2935606	272	8316.2	19277	5481.0	7251.0	10381.0	0	9374	103	9.07	0.00	13.91	38.04	0

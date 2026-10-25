@@ -362,6 +362,30 @@ String shortVariant(String? variant) {
   return variant.split(' (').first.replaceFirst(RegExp(r'^(clade|lineage):'), '');
 }
 
+/// Якщо зразок прийшов сирими прочитаннями: як їх перетворено на геном (картування й консенсус або збірка).
+class ReadsSummaryLine extends StatelessWidget {
+  final String? summary;
+  const ReadsSummaryLine(this.summary, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (summary == null) return const SizedBox.shrink();
+    final p = context.p;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      child: Text.rich(
+        TextSpan(
+          style: TextStyle(fontSize: 12, color: p.muted, height: 1.4),
+          children: [
+            TextSpan(text: '${context.tr('reads.title')}: ', style: TextStyle(color: p.text, fontWeight: FontWeight.w500)),
+            TextSpan(text: summary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 void showMessage(BuildContext context, String text, {bool error = false}) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text), backgroundColor: error ? context.p.danger : null));
 }

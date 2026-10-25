@@ -82,7 +82,10 @@ namespace PandemicShield.Api.Imports
         {
             using var scope = _scopes.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<PandemicDbContext>();
-            foreach (var batch in await db.Imports.Where(b => b.Status == ImportStatus.Running).ToListAsync(cancellationToken))
+            // Пакети FASTQ обробляє воркер Reads, а не API: їхній статус перезапуск API не перериває.
+            foreach (var batch in await db.Imports
+                         .Where(b => b.Status == ImportStatus.Running && b.Kind != ImportBatchEntity.ReadsKind)
+                         .ToListAsync(cancellationToken))
                 batch.MarkFailed("Перервано: API перезапустився під час імпорту. Запустіть імпорт ще раз.");
             await db.SaveChangesAsync(cancellationToken);
         }
@@ -92,7 +95,10 @@ namespace PandemicShield.Api.Imports
             using var scope = _scopes.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<PandemicDbContext>();
             var batch = await db.Imports.FindAsync([job.ImportId], cancellationToken);
-            if (batch == null || batch.Status != ImportStatus.Queued) return;
+            if (batch == null) return;
+            // FASTA від воркера Reads приходить, коли пакет уже в роботі; решта завдань — лише для нових пакетів.
+            bool prepared = job.FastaPath != null;
+            if (prepared ? batch.Status != ImportStatus.Running : batch.Status != ImportStatus.Queued) return;
 
             var context = new ImportContext(
                 db,
@@ -104,7 +110,8 @@ namespace PandemicShield.Api.Imports
 
             try
             {
-                if (job.ArchivePath != null) await ImportArchiveAsync(context, job.ArchivePath, cancellationToken);
+                if (prepared) await SubmitPreparedAsync(context, job, cancellationToken);
+                else if (job.ArchivePath != null) await ImportArchiveAsync(context, job.ArchivePath, cancellationToken);
                 else await ImportAccessionsAsync(context, cancellationToken);
             }
             catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
@@ -231,6 +238,18 @@ namespace PandemicShield.Api.Imports
         }
 
         // ==========================================
+        // FASTQ: консенсус або збірку вже зробив воркер Reads
+        // ==========================================
+        private static async Task SubmitPreparedAsync(ImportContext c, ImportJobMessage job, CancellationToken cancellationToken)
+        {
+            // Для вірусу набір визначено картуванням (замість «auto» пакета); для бактерії — вид з пакета.
+            await SubmitFileAsync(c, job.FastaPath!, job.RunName ?? "FASTQ", c.Batch.AmrOrganism, null, cancellationToken,
+                dataset: job.Dataset ?? c.Batch.NextcladeDataset, readsSummary: job.ReadsSummary);
+            c.Batch.MarkProgress(1, 0, null);
+            c.Batch.MarkCompleted(job.ReadsSummary ?? "Готово");
+        }
+
+        // ==========================================
         // АРХІВ NCBI DATASETS
         // ==========================================
         private async Task ImportArchiveAsync(ImportContext c, string archivePath, CancellationToken cancellationToken)
@@ -283,11 +302,12 @@ namespace PandemicShield.Api.Imports
         }
 
         private static async Task SubmitFileAsync(ImportContext c, string path, string runName, string? organism, string? sourceAccession,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken, string? dataset = null, string? readsSummary = null)
         {
             await using var input = File.OpenRead(path);
             await c.Submitter.SubmitAsync(c.Db, input,
-                new AnalysisSubmitter.Request(runName, c.Batch.Category, c.Batch.NextcladeDataset, organism, c.Batch.Id, sourceAccession),
+                new AnalysisSubmitter.Request(runName, c.Batch.Category, dataset ?? c.Batch.NextcladeDataset, organism, c.Batch.Id, sourceAccession,
+                    readsSummary),
                 cancellationToken);
         }
     }

@@ -275,6 +275,39 @@ const Map<String, Map<AppLanguage, String>> _strings = {
   'import.failedSome': {_uk: 'з помилкою: {n}', _en: 'failed: {n}'},
 
   // Нагляд за резистентністю (NCBI Pathogen Detection)
+  // Сирі прочитання (FASTQ)
+  'upload.fastqHint': {
+    _uk: 'FASTA з геномом або контигами. Або сирі прочитання FASTQ (.fastq, .fq, можна .gz): для Illumina оберіть разом R1 і R2.',
+    _en: 'FASTA with a genome or contigs. Or raw FASTQ reads (.fastq, .fq, optionally .gz): for Illumina select R1 and R2 together.',
+  },
+  'upload.oneFasta': {_uk: 'FASTA — по одному файлу. Кілька файлів можна лише для FASTQ.', _en: 'One FASTA at a time. Several files only for FASTQ.'},
+  'upload.illuminaPairs': {_uk: 'Для Illumina — один файл або пара R1 і R2.', _en: 'For Illumina: one file or an R1/R2 pair.'},
+  'upload.platform': {_uk: 'Платформа секвенування', _en: 'Sequencing platform'},
+  'upload.readsVirus': {
+    _uk: 'Прочитання картуються на референси всіх наборів Nextclade; вірус — той, на який лягло найбільше. Далі консенсус (N там, де глибина < 10) і Nextclade.',
+    _en: 'Reads are mapped to every Nextclade reference; the virus is the one most reads map to. Then a consensus (N where depth < 10) and Nextclade.',
+  },
+  'upload.readsBacteriaIllumina': {
+    _uk: 'fastp обрізає адаптери, SKESA збирає контиги (так само NCBI збирає ізоляти Pathogen Detection). Далі AMRFinderPlus і MLST. Займає кілька хвилин.',
+    _en: 'fastp trims adapters, SKESA assembles contigs (as NCBI does for Pathogen Detection). Then AMRFinderPlus and MLST. Takes a few minutes.',
+  },
+  'upload.readsBacteriaOnt': {
+    _uk: 'Flye збирає довгі прочитання, часто до повних хромосом і плазмід. Далі AMRFinderPlus і MLST. Займає 10–30 хвилин.',
+    _en: 'Flye assembles long reads, often into complete chromosomes and plasmids. Then AMRFinderPlus and MLST. Takes 10–30 minutes.',
+  },
+  'upload.sentReads': {
+    _uk: 'Прочитання прийнято. Прогрес — над таблицею запусків; готовий геном стане звичайним запуском.',
+    _en: 'Reads accepted. Progress is shown above the runs table; the finished genome becomes a regular run.',
+  },
+  'import.rowReads': {_uk: 'Прочитання FASTQ', _en: 'FASTQ reads'},
+  'import.status.processing': {_uk: 'Обробка', _en: 'Processing'},
+  'reads.title': {_uk: 'Із сирих прочитань', _en: 'From raw reads'},
+  'amr.speciesHint': {
+    _uk: 'Вид не вказано, тож точкові мутації (gyrA, parC, ompK…) не шукались. За MLST (схема {scheme}) це, ймовірно, {species}.',
+    _en: 'No species given, so point mutations (gyrA, parC, ompK…) were not searched. By MLST (scheme {scheme}) this is likely {species}.',
+  },
+  'amr.speciesRerun': {_uk: 'Повторити як {species}', _en: 'Re-run as {species}'},
+
   // Автовибір набору даних (nextclade sort)
   'dataset.auto': {_uk: 'Автоматично', _en: 'Auto'},
   'dataset.autoOption': {_uk: 'Визначити автоматично (nextclade sort)', _en: 'Detect automatically (nextclade sort)'},

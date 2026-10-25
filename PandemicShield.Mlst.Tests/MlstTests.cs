@@ -56,6 +56,32 @@ namespace PandemicShield.Mlst.Tests
         }
 
         [Fact]
+        public void Scheme_tie_is_broken_by_gc_content()
+        {
+            // Справжнє попередження mlst 2.35.0 на збірці K. pneumoniae HS11286 без вказаного виду.
+            const string warning = "WARNING: klebsiella(11)==ecoli_achtman_4(14464) score=100 /data/hs11286.fna\n";
+            var tied = SchemeTieBreaker.TiedSchemes(warning);
+
+            Assert.Equal(["klebsiella", "ecoli_achtman_4"], tied);
+            Assert.Equal("klebsiella", SchemeTieBreaker.Choose(tied, assemblyGc: 57.1));
+            Assert.Equal("ecoli_achtman_4", SchemeTieBreaker.Choose(tied, assemblyGc: 50.8));
+            Assert.Null(SchemeTieBreaker.Choose(["unknown_scheme"], 50));
+            Assert.Empty(SchemeTieBreaker.TiedSchemes("HS11286\tklebsiella\t11\tgapA(3)"));
+        }
+
+        [Fact]
+        public void Gc_percent_ignores_headers_and_ambiguous_bases()
+        {
+            Assert.Equal(50.0, SchemeTieBreaker.GcPercent(new StringReader(">contig_1 GC\nGGCCAATT\nnnNN\n>contig_2\nacgt\n")));
+        }
+
+        [Fact]
+        public void Every_scheme_with_typical_gc_is_a_real_scheme()
+        {
+            Assert.All(MlstRunner.Schemes.Values, scheme => Assert.True(SchemeTieBreaker.TypicalGc.ContainsKey(scheme), scheme));
+        }
+
+        [Fact]
         public void Every_mapped_scheme_exists_in_the_mlst_image()
         {
             // Вивід `mlst --list` в образі staphb/mlst:2.35.0 (лише схеми, на які посилається мапа).

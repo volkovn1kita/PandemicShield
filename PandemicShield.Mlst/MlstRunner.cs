@@ -62,8 +62,27 @@ namespace PandemicShield.Mlst
             Directory.CreateDirectory(outputDir);
             string json = Path.Combine(outputDir, "mlst.json");
 
-            var args = new List<string> { "--quiet", "--json", json, "--label", Path.GetFileName(Path.GetDirectoryName(fastaPath)) ?? "sample" };
-            if (organism != null && Schemes.TryGetValue(organism, out string? scheme))
+            string? scheme = organism != null && Schemes.TryGetValue(organism, out string? known) ? known : null;
+            var (result, output) = await RunSchemeAsync(fastaPath, scheme, json);
+            if (scheme != null) return result;
+
+            // Автовизначення: якщо кілька схем дали однаковий бал, mlst обирає між ними навмання — розв'язуємо за GC.
+            var tied = SchemeTieBreaker.TiedSchemes(output);
+            if (tied.Count < 2) return result;
+            double gc;
+            using (var reader = new StreamReader(fastaPath)) gc = SchemeTieBreaker.GcPercent(reader);
+            string? chosen = SchemeTieBreaker.Choose(tied, gc);
+            if (chosen == null || chosen == result.Scheme) return result;
+
+            Console.WriteLine($"MLST: нічия схем {string.Join(", ", tied)}; GC збірки {gc:0.0}% → {chosen}");
+            return (await RunSchemeAsync(fastaPath, chosen, json)).Result;
+        }
+
+        private async Task<(MlstResult Result, string Output)> RunSchemeAsync(string fastaPath, string? scheme, string json)
+        {
+            // Без --quiet: попередження про нічию схем ідуть у stderr і потрібні для SchemeTieBreaker.
+            var args = new List<string> { "--json", json, "--label", Path.GetFileName(Path.GetDirectoryName(fastaPath)) ?? "sample" };
+            if (scheme != null)
             {
                 args.Add("--scheme");
                 args.Add(scheme);
@@ -74,7 +93,7 @@ namespace PandemicShield.Mlst
             if (exitCode != 0 || !File.Exists(json))
                 throw new InvalidOperationException($"mlst завершився з кодом {exitCode}: {Tail(output)}");
 
-            return MlstReport.Read(await File.ReadAllTextAsync(json));
+            return (MlstReport.Read(await File.ReadAllTextAsync(json)), output);
         }
 
         private async Task<(int ExitCode, string Output)> RunAsync(IEnumerable<string> args)

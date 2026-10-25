@@ -65,11 +65,16 @@ namespace PandemicShield.DataAccess.Entities
         /// <summary>Пакет імпорту NCBI, з якого прийшов цей запуск (null — файл завантажено вручну).</summary>
         public Guid? ImportId { get; private set; }
 
+        /// <summary>Якщо зразок прийшов сирими прочитаннями (FASTQ): платформа, кількість і якість, глибина чи збірка.</summary>
+        public string? ReadsSummary { get; private set; }
+
         /// <summary>Номер у NCBI (збірка GCA_… або послідовність), якщо запуск — це один імпортований зразок.</summary>
         public string? SourceAccession { get; private set; }
 
-        public AnalysisRunEntity(string fileName, ThreatCategory category, Guid? importId = null, string? sourceAccession = null)
+        public AnalysisRunEntity(string fileName, ThreatCategory category, Guid? importId = null, string? sourceAccession = null,
+            string? readsSummary = null)
         {
+            ReadsSummary = readsSummary;
             Id = Guid.NewGuid();
             FileName = fileName;
             Category = category;

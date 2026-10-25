@@ -78,7 +78,55 @@ namespace PandemicShield.Api.Endpoints
                 return Results.Accepted("/api/imports", batch);
             })
             .DisableAntiforgery();
+
+            // Сирі прочитання: Illumina (R1 або R1+R2) чи Nanopore (один або кілька файлів одного зразка).
+            // Воркер Reads зробить з них консенсус вірусу або збірку бактерії, а далі — звичайний запуск.
+            app.MapPost("/api/reads", async (
+                HttpRequest httpRequest,
+                PandemicDbContext db,
+                AnalysisSubmitter submitter,
+                AnalysisOptions options,
+                JobPublisher jobs) =>
+            {
+                var form = await httpRequest.ReadFormAsync();
+                var files = form.Files.GetFiles("files");
+                if (!Enum.TryParse(form["category"], out ThreatCategory category)) return Results.BadRequest("Вкажіть тип зразка.");
+                string platform = form["platform"].ToString().ToLowerInvariant();
+                string? dataset = Normalize(form["nextcladeDataset"]);
+                string? organism = Normalize(form["amrOrganism"]);
+
+                string? error = ValidateCategory(category) ?? submitter.Validate(category, dataset, organism);
+                if (error != null) return Results.BadRequest(error);
+                if (platform is not ("illumina" or "nanopore")) return Results.BadRequest("Платформа: illumina або nanopore.");
+                if (files.Count == 0) return Results.BadRequest("Оберіть файл FASTQ.");
+                if (platform == "illumina" && files.Count > 2) return Results.BadRequest("Для Illumina — один файл або пара R1 і R2.");
+                if (platform == "nanopore" && files.Count > 50) return Results.BadRequest("Не більше 50 файлів Nanopore за раз.");
+                var wrong = files.FirstOrDefault(f => !FastqExtensions.Any(ext => f.FileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+                if (wrong != null) return Results.BadRequest($"«{wrong.FileName}» — не FASTQ (.fastq, .fq, можна .gz).");
+
+                // Без набору даних вірус визначається за картуванням на референси всіх наборів.
+                if (category == ThreatCategory.Virus) dataset ??= AnalysisOptions.AutoDataset;
+                var names = files.Select(f => Path.GetFileName(f.FileName)).ToList();
+                var batch = ImportBatchEntity.ForReads(category, dataset, organism, platform, names);
+
+                // Файли FASTQ бувають на гігабайти: пишемо їх потоком у спільний том, воркер Reads читає звідти.
+                string readsDir = Path.Combine(options.ImportDir(batch.Id), "reads");
+                Directory.CreateDirectory(readsDir);
+                foreach (var file in files)
+                {
+                    await using var output = File.Create(Path.Combine(readsDir, Path.GetFileName(file.FileName)));
+                    await file.CopyToAsync(output);
+                }
+
+                db.Imports.Add(batch);
+                await db.SaveChangesAsync();
+                await jobs.PublishAsync(JobPublisher.ReadsQueue, new ReadsJobMessage { ImportId = batch.Id });
+                return Results.Accepted("/api/imports", batch);
+            })
+            .DisableAntiforgery();
         }
+
+        private static readonly string[] FastqExtensions = [".fastq", ".fq", ".fastq.gz", ".fq.gz"];
 
         private static string? ValidateCategory(ThreatCategory category) =>
             category is ThreatCategory.Virus or ThreatCategory.Bacteria ? null : "Імпорт з NCBI підтримує віруси й бактерії.";
