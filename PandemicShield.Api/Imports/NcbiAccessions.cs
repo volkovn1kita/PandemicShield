@@ -53,6 +53,8 @@ namespace PandemicShield.Api.Imports
 
         public static bool IsAssembly(string accession) => AssemblyRegex().IsMatch(accession);
 
+        public static bool IsNucleotide(string accession) => NucleotideRegex().IsMatch(accession);
+
         /// <summary>Номер без версії: OQ291490.1 → OQ291490. NCBI може повернути іншу версію, ніж попросили.</summary>
         public static string WithoutVersion(string accession)
         {

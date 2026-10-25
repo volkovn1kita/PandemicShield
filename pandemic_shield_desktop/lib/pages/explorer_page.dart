@@ -39,15 +39,24 @@ class _ExplorerPageState extends State<ExplorerPage> {
 
   dynamic get _record => _records.isEmpty ? null : _records[_recordIndex];
 
-  Future<void> _open({String? filePath, String? text, String? name}) async {
+  /// Генетичний код з анотації GenBank (/transl_table), якщо він є серед тих, що пропонує перемикач.
+  int? _annotatedCode(int index) {
+    final code = _records[index]['geneticCode'] as int?;
+    return const [1, 2, 11].contains(code) ? code : null;
+  }
+
+  Future<void> _open({String? filePath, String? text, String? name, String? accession}) async {
     setState(() => _loading = true);
     try {
-      final result = await Api.explorerOpen(filePath: filePath, text: text);
+      final result = accession != null
+          ? await Api.post('/explorer/ncbi', {'accession': accession}, wait: const Duration(seconds: 90))
+          : await Api.explorerOpen(filePath: filePath, text: text);
       setState(() {
         _token = result['token'];
         _fileName = name ?? result['fileName'] ?? context.tr('explorer.pasted');
         _records = result['records'];
         _recordIndex = 0;
+        _code = _annotatedCode(0) ?? 1;
         _circular = null;
         _selected = null;
         _zoom = 1;
@@ -95,6 +104,74 @@ class _ExplorerPageState extends State<ExplorerPage> {
     );
     if (text != null && text.trim().isNotEmpty) await _open(text: text);
   }
+
+  /// Запис GenBank прямо з NCBI. Приклади підібрано так, щоб кожен показував щось своє.
+  Future<void> _fromNcbi() async {
+    final controller = TextEditingController();
+    final accession = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final p = context.p;
+        void submit([String? value]) {
+          final text = (value ?? controller.text).trim();
+          if (text.isNotEmpty) Navigator.pop(context, text);
+        }
+
+        return AlertDialog(
+          title: Text(context.tr('explorer.ncbiTitle'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          content: SizedBox(
+            width: 520,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  style: mono(context, size: 13),
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(hintText: 'J01749.1'),
+                  onSubmitted: submit,
+                ),
+                const SizedBox(height: 14),
+                Text(context.tr('explorer.ncbiExamples'), style: TextStyle(fontSize: 12.5, color: p.muted)),
+                const SizedBox(height: 6),
+                for (final (id, key) in _ncbiExamples)
+                  InkWell(
+                    onTap: () => submit(id),
+                    borderRadius: BorderRadius.circular(5),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(width: 104, child: Text(id, style: mono(context, size: 12.5, color: p.text))),
+                          Expanded(child: Text(context.tr(key), style: TextStyle(fontSize: 12.5, color: p.muted, height: 1.35))),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(context.tr('common.cancel'))),
+            FilledButton(onPressed: submit, child: Text(context.tr('explorer.open'))),
+          ],
+        );
+      },
+    );
+    if (accession != null) await _open(accession: accession.toUpperCase());
+  }
+
+  static const _ncbiExamples = [
+    ('J01749.1', 'explorer.ex.pbr322'),
+    ('NC_001422.1', 'explorer.ex.phix'),
+    ('NC_012920.1', 'explorer.ex.mito'),
+    ('K03455.1', 'explorer.ex.hiv'),
+    ('NC_001416.1', 'explorer.ex.lambda'),
+    ('NC_045512.2', 'explorer.ex.sars'),
+  ];
 
   Future<void> _loadOrfs() async {
     final token = _token;
@@ -166,6 +243,7 @@ class _ExplorerPageState extends State<ExplorerPage> {
                   ],
                   onChanged: (v) => _setOption(() {
                     _recordIndex = v!;
+                    _code = _annotatedCode(v) ?? _code;
                     _circular = null;
                   }),
                 ),
@@ -173,6 +251,11 @@ class _ExplorerPageState extends State<ExplorerPage> {
             if (_token != null)
               OutlinedButton.icon(onPressed: _compare, icon: const Icon(Icons.compare_arrows, size: 15), label: Text(context.tr('explorer.compare'))),
             OutlinedButton(onPressed: _loading ? null : _paste, child: Text(context.tr('explorer.paste'))),
+            OutlinedButton.icon(
+              onPressed: _loading ? null : _fromNcbi,
+              icon: const Icon(Icons.cloud_download_outlined, size: 15),
+              label: Text(context.tr('explorer.fromNcbi')),
+            ),
             FilledButton.icon(
               onPressed: _loading ? null : _pickFile,
               icon: const Icon(Icons.folder_open_outlined, size: 16),
@@ -182,7 +265,7 @@ class _ExplorerPageState extends State<ExplorerPage> {
         ),
         Expanded(
           child: record == null
-              ? _Intro(loading: _loading, onOpen: _pickFile, onPaste: _paste)
+              ? _Intro(loading: _loading, onOpen: _pickFile, onPaste: _paste, onNcbi: _fromNcbi)
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -374,7 +457,8 @@ class _Intro extends StatelessWidget {
   final bool loading;
   final VoidCallback onOpen;
   final VoidCallback onPaste;
-  const _Intro({required this.loading, required this.onOpen, required this.onPaste});
+  final VoidCallback onNcbi;
+  const _Intro({required this.loading, required this.onOpen, required this.onPaste, required this.onNcbi});
 
   @override
   Widget build(BuildContext context) {
@@ -396,6 +480,8 @@ class _Intro extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FilledButton(onPressed: onOpen, child: Text(context.tr('explorer.openFile'))),
+                  const SizedBox(width: 8),
+                  OutlinedButton(onPressed: onNcbi, child: Text(context.tr('explorer.fromNcbi'))),
                   const SizedBox(width: 8),
                   OutlinedButton(onPressed: onPaste, child: Text(context.tr('explorer.paste'))),
                 ],

@@ -53,6 +53,42 @@ namespace PandemicShield.Api.Imports
             }
         }
 
+        /// <summary>
+        /// Один запис GenBank з усіма анотаціями (<c>gbwithparts</c>: для WGS-контигів і хромосом послідовність не винесена
+        /// в окремі частини). <c>null</c> — номера немає в NCBI; більший за <paramref name="maxBytes"/> — <see cref="InvalidDataException"/>.
+        /// </summary>
+        public async Task<string?> FetchGenBankAsync(string accession, int maxBytes, CancellationToken cancellationToken)
+        {
+            string url = $"{_eutilsUrl}/efetch.fcgi?db=nuccore&id={Uri.EscapeDataString(accession)}&rettype=gbwithparts&retmode=text&tool=PandemicShield" +
+                         (_apiKey != null ? $"&api_key={Uri.EscapeDataString(_apiKey)}" : "");
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            HttpResponseMessage response;
+            try
+            {
+                response = await SendAsync(request, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                return null; // efetch відповідає 400 на номер, якого немає
+            }
+
+            using (response)
+            {
+                await using var body = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using var buffer = new MemoryStream();
+                var chunk = new byte[81920];
+                int read;
+                while ((read = await body.ReadAsync(chunk, cancellationToken)) > 0)
+                {
+                    if (buffer.Length + read > maxBytes)
+                        throw new InvalidDataException($"Запис {accession} більший за {maxBytes / 1024 / 1024} МБ: Explorer — для одного геному чи плазміди.");
+                    buffer.Write(chunk, 0, read);
+                }
+                string text = System.Text.Encoding.UTF8.GetString(buffer.GetBuffer(), 0, (int)buffer.Length);
+                return text.TrimStart().StartsWith("LOCUS", StringComparison.Ordinal) ? text : null;
+            }
+        }
+
         /// <summary>Завантажує архів збірки (геномна FASTA + звіт із видом) у файл.</summary>
         public async Task DownloadAssemblyAsync(string accession, string zipPath, CancellationToken cancellationToken)
         {

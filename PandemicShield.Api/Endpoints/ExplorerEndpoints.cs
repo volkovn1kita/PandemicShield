@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PandemicShield.Api.Explorer;
+using PandemicShield.Api.Imports;
 using PandemicShield.Bio;
 using PandemicShield.Bio.Alignment;
 using PandemicShield.Bio.Formats;
@@ -16,6 +17,8 @@ namespace PandemicShield.Api.Endpoints
 
         public sealed record StructureRequest(string Protein);
 
+        public sealed record NcbiRequest(string? Accession);
+
         public static void MapExplorerEndpoints(this IEndpointRouteBuilder app)
         {
             app.MapPost("/api/explorer/files", async ([FromForm(Name = "file")] IFormFile? file, [FromForm] string? text, ExplorerService explorer) =>
@@ -28,34 +31,7 @@ namespace PandemicShield.Api.Endpoints
                 {
                     using var reader = file != null ? new StreamReader(file.OpenReadStream()) : new StreamReader(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(Pasted(text!))));
                     var (token, records) = explorer.Open(reader);
-                    return Results.Ok(new
-                    {
-                        Token = token,
-                        FileName = file?.FileName,
-                        Records = records.Select((r, i) => new
-                        {
-                            Index = i,
-                            r.Id,
-                            r.Description,
-                            Length = r.Sequence.Length,
-                            r.Circular,
-                            Gc = Math.Round(r.GcPercent, 1),
-                            Features = r.Features
-                                .Where(f => f.Type != "gene" && f.Segments.Count > 0)
-                                .Select(f => new
-                                {
-                                    f.Type,
-                                    f.Label,
-                                    f.Gene,
-                                    f.Product,
-                                    Strand = f.Strand == Strand.Forward ? '+' : '-',
-                                    f.Start,
-                                    f.End,
-                                    Segments = f.Segments.Select(s => new[] { s.Start, s.End }),
-                                    f.Partial
-                                })
-                        })
-                    });
+                    return Results.Ok(Opened(token, file?.FileName, records));
                 }
                 catch (FormatException ex)
                 {
@@ -63,6 +39,36 @@ namespace PandemicShield.Api.Endpoints
                 }
             })
             .DisableAntiforgery();
+
+            // Запис GenBank прямо з NCBI за номером (J01749.1, NC_045512.2): не треба завантажувати файл вручну.
+            app.MapPost("/api/explorer/ncbi", async (NcbiRequest request, NcbiClient ncbi, ExplorerService explorer, CancellationToken cancellationToken) =>
+            {
+                string accession = (request.Accession ?? string.Empty).Trim().ToUpperInvariant();
+                if (NcbiAccessions.IsAssembly(accession))
+                    return Results.BadRequest($"{accession} — збірка з багатьох контигів. Для Explorer потрібен номер однієї послідовності (CP…, NC_…, NZ_…).");
+                if (!NcbiAccessions.IsNucleotide(accession))
+                    return Results.BadRequest($"«{request.Accession}» не схоже на номер послідовності NCBI (наприклад, J01749.1 або NC_045512.2).");
+
+                try
+                {
+                    string? genBank = await ncbi.FetchGenBankAsync(accession, ExplorerService.MaxFileBytes, cancellationToken);
+                    if (genBank == null) return Results.NotFound($"Номера {accession} немає в NCBI.");
+                    var (token, records) = explorer.Open(new StringReader(genBank));
+                    return Results.Ok(Opened(token, $"{accession}.gb", records));
+                }
+                catch (InvalidDataException ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
+                catch (FormatException ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
+                catch (HttpRequestException ex)
+                {
+                    return Results.Problem($"NCBI недоступний (потрібен інтернет): {ex.Message}", statusCode: 502);
+                }
+            });
 
             app.MapGet("/api/explorer/{token:guid}/{index:int}/orfs", (Guid token, int index, int? minLength, int? code, bool? altStarts, bool? circular,
                 ExplorerService explorer) =>
@@ -157,6 +163,38 @@ namespace PandemicShield.Api.Endpoints
                 }
             });
         }
+
+        private static object Opened(Guid token, string? fileName, List<SequenceRecord> records) => new
+        {
+            Token = token,
+            FileName = fileName,
+            Records = records.Select((r, i) => new
+            {
+                Index = i,
+                r.Id,
+                r.Description,
+                Length = r.Sequence.Length,
+                r.Circular,
+                Gc = Math.Round(r.GcPercent, 1),
+                // Код з анотації (найчастіший /transl_table серед CDS): застосунок одразу вмикає його для мітохондрій чи бактерій.
+                GeneticCode = r.Features.Where(f => f.Type == "CDS" && f.TranslationTable != null)
+                    .GroupBy(f => f.TranslationTable!.Value).OrderByDescending(g => g.Count()).Select(g => (int?)g.Key).FirstOrDefault(),
+                Features = r.Features
+                    .Where(f => f.Type != "gene" && f.Segments.Count > 0)
+                    .Select(f => new
+                    {
+                        f.Type,
+                        f.Label,
+                        f.Gene,
+                        f.Product,
+                        Strand = f.Strand == Strand.Forward ? '+' : '-',
+                        f.Start,
+                        f.End,
+                        Segments = f.Segments.Select(s => new[] { s.Start, s.End }),
+                        f.Partial
+                    })
+            })
+        };
 
         // Вставлений текст без заголовка «>» — одна послідовність без назви.
         private static string Pasted(string text)

@@ -1,5 +1,7 @@
+using System.Net;
 using Microsoft.Extensions.Caching.Memory;
 using PandemicShield.Api.Explorer;
+using PandemicShield.Api.Imports;
 using PandemicShield.Bio;
 using PandemicShield.Bio.Formats;
 
@@ -66,6 +68,44 @@ namespace PandemicShield.Api.Tests
             var (_, protein) = ExplorerService.Region(plasmid, bla.Segments, Strand.Reverse, GeneticCode.Standard);
 
             Assert.Equal(bla.Translation, protein);
+            // /transl_table=11 з анотації: застосунок сам перемикає код на бактеріальний.
+            Assert.Equal(11, bla.TranslationTable);
+            Assert.All(Wuhan.Features, f => Assert.Null(f.TranslationTable));
+        }
+
+        private sealed class StubHandler(HttpStatusCode status, string body) : HttpMessageHandler
+        {
+            public Uri? LastUri { get; private set; }
+
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                LastUri = request.RequestUri;
+                return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body) });
+            }
+        }
+
+        [Fact]
+        public async Task GenBank_by_accession_is_fetched_with_all_parts_and_missing_ones_give_null()
+        {
+            string genBank = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Data", "pBR322.gb"));
+            var found = new StubHandler(HttpStatusCode.OK, genBank);
+            string? text = await new NcbiClient(new HttpClient(found)).FetchGenBankAsync("J01749.1", ExplorerService.MaxFileBytes, CancellationToken.None);
+
+            Assert.Equal(genBank, text);
+            Assert.Contains("rettype=gbwithparts", found.LastUri!.Query);
+            Assert.True(SequenceFile.Read(new StringReader(text!)).Single().Circular);
+
+            // efetch: 400 на неіснуючий номер, 200 з порожнім тілом на номер іншої бази.
+            var bad = new NcbiClient(new HttpClient(new StubHandler(HttpStatusCode.BadRequest, "Error: F a i l e d  t o  u n d e r s t a n d  i d")));
+            Assert.Null(await bad.FetchGenBankAsync("ZZ999999.1", ExplorerService.MaxFileBytes, CancellationToken.None));
+            var empty = new NcbiClient(new HttpClient(new StubHandler(HttpStatusCode.OK, "\n")));
+            Assert.Null(await empty.FetchGenBankAsync("ZZ999999.1", ExplorerService.MaxFileBytes, CancellationToken.None));
+
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                new NcbiClient(new HttpClient(new StubHandler(HttpStatusCode.OK, genBank))).FetchGenBankAsync("J01749.1", 1000, CancellationToken.None));
+
+            Assert.True(NcbiAccessions.IsNucleotide("NC_012920.1"));
+            Assert.False(NcbiAccessions.IsNucleotide("GCA_000005845.2"));
         }
 
         [Fact]

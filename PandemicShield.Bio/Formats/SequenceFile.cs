@@ -20,7 +20,8 @@ namespace PandemicShield.Bio.Formats
         string? Product,
         string? LocusTag,
         string? Translation,
-        bool Partial)
+        bool Partial,
+        int? TranslationTable = null)
     {
         public long Start => Segments.Min(s => s.Start);
         public long End => Segments.Max(s => s.End);
@@ -220,7 +221,9 @@ namespace PandemicShield.Bio.Formats
             }
 
             var (segments, strand, partial) = ParseLocation(location);
-            return new Feature(type, strand, segments, Get("gene"), Get("product"), Get("locus_tag"), Get("translation")?.Replace(" ", ""), partial);
+            // /transl_table: таблиця генетичного коду NCBI (2 — мітохондрії хребетних, 11 — бактерії); без нього — стандартна (1).
+            int? table = int.TryParse(Get("transl_table"), out int t) ? t : null;
+            return new Feature(type, strand, segments, Get("gene"), Get("product"), Get("locus_tag"), Get("translation")?.Replace(" ", ""), partial, table);
         }
 
         /// <summary>
