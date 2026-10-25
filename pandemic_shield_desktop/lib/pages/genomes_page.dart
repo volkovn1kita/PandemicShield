@@ -36,13 +36,18 @@ class _GenomesPageState extends State<GenomesPage> {
   String? _pendingSequenceId;
   List<dynamic>? _hits;
   Timer? _timer;
+  StreamSubscription<ChangeEvent>? _changes;
 
   @override
   void initState() {
     super.initState();
     _load();
+    // Наживо (SignalR) — перечитуємо лише на події цього запуску; без з'єднання — опитування кожні 3 с.
+    _changes = widget.store.events.listen((e) {
+      if (widget.active && (e.topic == 'runs' || e.topic == 'alerts') && e.concernsRun(widget.selectedRunId)) _load();
+    });
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (widget.active) _load();
+      if (widget.active && !widget.store.live) _load();
     });
   }
 
@@ -55,6 +60,7 @@ class _GenomesPageState extends State<GenomesPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _changes?.cancel();
     _search.dispose();
     super.dispose();
   }

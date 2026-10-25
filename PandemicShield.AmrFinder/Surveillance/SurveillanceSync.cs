@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using PandemicShield.Contracts.Events;
 using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
 
@@ -135,7 +136,10 @@ namespace PandemicShield.AmrFinder.Surveillance
             if (sync == null) return;
             update(sync);
             await db.SaveChangesAsync();
+            await Changes.NotifyAsync(ChangeTopics.Surveillance);
         }
+
+        private static readonly ChangeNotifier Changes = new();
 
         [GeneratedRegex(@"(?<pdg>PDG\d+\.\d+)\.amr\.metadata\.tsv")]
         private static partial Regex AmrMetadataRegex();

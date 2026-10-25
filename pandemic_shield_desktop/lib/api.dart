@@ -7,6 +7,9 @@ class Api {
   static const String baseUrl = 'http://localhost:5020/api';
   static const Duration timeout = Duration(seconds: 5);
 
+  /// SignalR-хаб подій змін (див. PandemicShield.Api/Events).
+  static String get hubUrl => '${baseUrl.substring(0, baseUrl.length - '/api'.length)}/hubs/events';
+
   static Future<dynamic> get(String path, [Map<String, String>? query]) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
     final response = await http.get(uri).timeout(timeout);

@@ -1,6 +1,7 @@
 ﻿using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
 using PandemicShield.Contracts;
+using PandemicShield.Contracts.Events;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
@@ -23,6 +24,7 @@ namespace PandemicShield.Aggregator
                 exclusive: false,
                 autoDelete: false);
 
+            var changes = new ChangeNotifier(rabbitHost);
             var consumer = new AsyncEventingBasicConsumer(channel);
 
             consumer.ReceivedAsync += async (model, ea) => {
@@ -45,6 +47,8 @@ namespace PandemicShield.Aggregator
                     using var dbContext = new PandemicDbContext();
                     dbContext.Threats.Add(alertEntity);
                     await dbContext.SaveChangesAsync();
+                    // Сповіщення ORF приходять по одному; ChangeNotifier стискає їх до однієї події на 0,5 с.
+                    await changes.NotifyAsync(ChangeTopics.Alerts, alertEntity.RunId);
                 }
 
 

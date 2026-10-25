@@ -7,7 +7,9 @@ using Google.Protobuf;
 using Microsoft.AspNetCore.Mvc;
 using PandemicShield.Api.Endpoints;
 using PandemicShield.Api.Extensions;
+using PandemicShield.Api.Events;
 using PandemicShield.Api.Imports;
+using PandemicShield.Contracts.Events;
 using Microsoft.AspNetCore.Http.Features;
 
 namespace PandemicShield.Api
@@ -24,6 +26,11 @@ namespace PandemicShield.Api
 
             builder.Services.AddSingleton(AnalysisOptions.FromEnvironment());
             builder.Services.AddSingleton<JobPublisher>();
+
+            // Події змін: застосунок підписується на /hubs/events замість опитування кожні 3 секунди.
+            builder.Services.AddSignalR();
+            builder.Services.AddSingleton(new ChangeNotifier());
+            builder.Services.AddHostedService<EventRelay>();
             builder.Services.AddScoped<AnalysisSubmitter>();
 
             // Імпорт відкритих даних NCBI: завантаження у фоні, щоб запит не чекав на сотні збірок.
@@ -61,6 +68,9 @@ namespace PandemicShield.Api
             }
 
             PandemicShield.Api.Extensions.DbSeeder.Seed();
+
+            app.UseChangeEvents();
+            app.MapHub<EventsHub>("/hubs/events");
 
             app.MapThreatEndpoints();
             app.MapDictionaryEndpoints();

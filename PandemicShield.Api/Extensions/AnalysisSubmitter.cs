@@ -1,5 +1,6 @@
 using Google.Protobuf;
 using PandemicShield.Contracts;
+using PandemicShield.Contracts.Events;
 using PandemicShield.Contracts.Grpc;
 using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
@@ -24,12 +25,14 @@ namespace PandemicShield.Api.Extensions
         private readonly DnaParserService.DnaParserServiceClient _grpc;
         private readonly AnalysisOptions _options;
         private readonly JobPublisher _jobs;
+        private readonly ChangeNotifier _changes;
 
-        public AnalysisSubmitter(DnaParserService.DnaParserServiceClient grpc, AnalysisOptions options, JobPublisher jobs)
+        public AnalysisSubmitter(DnaParserService.DnaParserServiceClient grpc, AnalysisOptions options, JobPublisher jobs, ChangeNotifier changes)
         {
             _grpc = grpc;
             _options = options;
             _jobs = jobs;
+            _changes = changes;
         }
 
         /// <summary>Перевіряє параметри; повертає текст помилки або null.</summary>
@@ -130,6 +133,7 @@ namespace PandemicShield.Api.Extensions
                     });
                 }
 
+                await _changes.NotifyAsync(ChangeTopics.Runs, run.Id);
                 return (run, response);
             }
             catch (Exception ex)

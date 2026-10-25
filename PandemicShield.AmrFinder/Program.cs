@@ -4,6 +4,7 @@ using PandemicShield.AmrFinder.Rules;
 using PandemicShield.AmrFinder.Surveillance;
 using PandemicShield.Bio.Variants;
 using PandemicShield.Contracts;
+using PandemicShield.Contracts.Events;
 using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
 using RabbitMQ.Client;
@@ -18,6 +19,9 @@ namespace PandemicShield.AmrFinder
     /// </summary>
     internal class Program
     {
+        // Подія для застосунку (через API і SignalR): статус запуску чи сповіщення змінились.
+        private static readonly ChangeNotifier Changes = new();
+
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -87,6 +91,7 @@ namespace PandemicShield.AmrFinder
                 }
 
                 int alerts = await SaveAsync(job.RunId, hits);
+                if (alerts > 0) await Changes.NotifyAsync(ChangeTopics.Alerts, job.RunId);
                 int amrGenes = hits.Count(h => h.Type == "AMR");
                 string message = $"Знахідок: {hits.Count} (резистентність: {amrGenes}), сповіщень: {alerts}";
 
@@ -138,6 +143,7 @@ namespace PandemicShield.AmrFinder
 
             update(run);
             await db.SaveChangesAsync();
+            await Changes.NotifyAsync(ChangeTopics.Runs, runId);
         }
     }
 }

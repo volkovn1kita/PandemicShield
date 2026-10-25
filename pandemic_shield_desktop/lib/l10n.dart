@@ -34,6 +34,8 @@ const Map<String, Map<AppLanguage, String>> _strings = {
   'nav.rules': {_uk: 'Правила', _en: 'Rules'},
   'status.online': {_uk: 'API підключено', _en: 'API connected'},
   'status.offline': {_uk: 'API недоступний', _en: 'API offline'},
+  'status.live': {_uk: 'API підключено · наживо', _en: 'API connected · live'},
+  'status.polling': {_uk: 'API підключено · опитування', _en: 'API connected · polling'},
   'theme.toggle': {_uk: 'Світла / темна тема', _en: 'Light / dark theme'},
   'disclaimer': {_uk: 'Дослідницький інструмент, не для діагностики', _en: 'Research tool, not for diagnosis'},
 

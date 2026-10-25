@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PandemicShield.Bio.Variants;
 using PandemicShield.Contracts;
+using PandemicShield.Contracts.Events;
 using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
 using RabbitMQ.Client;
@@ -16,6 +17,9 @@ namespace PandemicShield.Mlst
     /// </summary>
     internal class Program
     {
+        // Подія для застосунку (через API і SignalR): статус запуску чи сповіщення змінились.
+        private static readonly ChangeNotifier Changes = new();
+
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -60,6 +64,7 @@ namespace PandemicShield.Mlst
                 MlstResult result = await runner.RunAsync(job.FilePath, job.Organism, outputDir);
                 string message = MlstReport.Describe(result);
                 int alerts = await SaveAlertsAsync(job.RunId, result);
+                if (alerts > 0) await Changes.NotifyAsync(ChangeTopics.Alerts, job.RunId);
 
                 await UpdateRunAsync(job.RunId, run => run.MarkMlstCompleted(
                     result.NoScheme ? null : result.Scheme,
@@ -102,6 +107,7 @@ namespace PandemicShield.Mlst
 
             update(run);
             await db.SaveChangesAsync();
+            await Changes.NotifyAsync(ChangeTopics.Runs, runId);
         }
     }
 }

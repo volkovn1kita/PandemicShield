@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PandemicShield.Bio.Variants;
 using PandemicShield.Contracts;
+using PandemicShield.Contracts.Events;
 using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
 using PandemicShield.Nextclade.Results;
@@ -18,6 +19,9 @@ namespace PandemicShield.Nextclade
     /// </summary>
     internal class Program
     {
+        // Подія для застосунку (через API і SignalR): статус запуску чи сповіщення змінились.
+        private static readonly ChangeNotifier Changes = new();
+
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -75,6 +79,7 @@ namespace PandemicShield.Nextclade
                                  $"мутацій: {summary.Mutations}, сповіщень: {summary.Alerts}" +
                                  (breakdown == null ? "" : $". Набори: {breakdown}");
                 await UpdateRunAsync(job.RunId, run => run.MarkNextcladeCompleted(summary.Sequences, message));
+                if (summary.Alerts > 0) await Changes.NotifyAsync(ChangeTopics.Alerts, job.RunId);
                 Console.WriteLine($"Запуск {job.RunId}: {message}");
             }
             catch (Exception ex)
@@ -174,6 +179,7 @@ namespace PandemicShield.Nextclade
 
             update(run);
             await db.SaveChangesAsync();
+            await Changes.NotifyAsync(ChangeTopics.Runs, runId);
         }
     }
 }

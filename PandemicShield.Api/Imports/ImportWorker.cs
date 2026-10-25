@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using PandemicShield.Api.Extensions;
 using PandemicShield.Contracts;
+using PandemicShield.Contracts.Events;
 using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
 using RabbitMQ.Client;
@@ -23,12 +24,14 @@ namespace PandemicShield.Api.Imports
         private readonly IServiceScopeFactory _scopes;
         private readonly AnalysisOptions _options;
         private readonly ILogger<ImportWorker> _logger;
+        private readonly ChangeNotifier _changes;
 
-        public ImportWorker(IServiceScopeFactory scopes, AnalysisOptions options, ILogger<ImportWorker> logger)
+        public ImportWorker(IServiceScopeFactory scopes, AnalysisOptions options, ILogger<ImportWorker> logger, ChangeNotifier changes)
         {
             _scopes = scopes;
             _options = options;
             _logger = logger;
+            _changes = changes;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -112,6 +115,7 @@ namespace PandemicShield.Api.Imports
             finally
             {
                 await db.SaveChangesAsync(CancellationToken.None);
+                await _changes.NotifyAsync(ChangeTopics.Imports);
                 // Файли запусків уже скопійовано в runs/{id}; тимчасові завантаження більше не потрібні.
                 try { Directory.Delete(context.WorkDir, recursive: true); } catch (IOException) { }
             }
@@ -199,6 +203,7 @@ namespace PandemicShield.Api.Imports
             {
                 c.Batch.MarkProgress(done, failed, $"{accession}: завантаження…");
                 await c.Db.SaveChangesAsync(cancellationToken);
+                await _changes.NotifyAsync(ChangeTopics.Imports);
 
                 string path = Path.Combine(c.WorkDir, $"{accession}.fasta");
                 try

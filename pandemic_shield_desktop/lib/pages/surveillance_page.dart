@@ -36,14 +36,18 @@ class _SurveillancePageState extends State<SurveillancePage> {
   String? _lastCompletedSync;
   final Set<String> _importing = {};
   Timer? _timer;
+  StreamSubscription<ChangeEvent>? _changes;
 
   @override
   void initState() {
     super.initState();
     _loadTaxgroups();
     _poll();
+    _changes = widget.store.events.listen((e) {
+      if (widget.active && e.topic == 'surveillance') _poll();
+    });
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (widget.active) _poll();
+      if (widget.active && !widget.store.live) _poll();
     });
   }
 
@@ -56,6 +60,7 @@ class _SurveillancePageState extends State<SurveillancePage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _changes?.cancel();
     super.dispose();
   }
 

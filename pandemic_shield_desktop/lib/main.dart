@@ -185,7 +185,7 @@ class _Sidebar extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    context.tr(store.online ? 'status.online' : 'status.offline'),
+                    context.tr(store.online ? (store.live ? 'status.live' : 'status.polling') : 'status.offline'),
                     style: TextStyle(fontSize: 12, color: p.muted),
                   ),
                 ),

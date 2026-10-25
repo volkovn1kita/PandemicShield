@@ -99,19 +99,24 @@ class _AmrRunViewState extends State<AmrRunView> {
   bool _loaded = false;
   String _type = 'all';
   Timer? _timer;
+  StreamSubscription<ChangeEvent>? _changes;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _changes = widget.store.events.listen((e) {
+      if (widget.active && (e.topic == 'runs' || e.topic == 'alerts') && e.concernsRun(widget.run['id'])) _load();
+    });
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (widget.active) _load();
+      if (widget.active && !widget.store.live) _load();
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _changes?.cancel();
     _search.dispose();
     super.dispose();
   }
