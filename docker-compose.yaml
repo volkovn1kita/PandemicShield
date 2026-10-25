@@ -8,6 +8,13 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    # Готовий, коли AMQP-порт приймає з'єднання (а не лише коли запущено вузол)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 10s
 
   # 2. База даних
   postgres:
@@ -19,6 +26,13 @@ services:
       POSTGRES_DB: pandemic_shield_db
     ports:
       - "5433:5432"
+    # -h 127.0.0.1: під час ініціалізації Postgres слухає лише unix-сокет, тож TCP-перевірка не спрацює раніше часу
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "adminpostgres", "-d", "pandemic_shield_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   # 3. Парсер (gRPC сервер)
   parser:
@@ -33,8 +47,10 @@ services:
       # Розмір ядра вікна і перекриття в нуклеотидах (ORF, коротші за перекриття, не губляться на межах)
       - WINDOW_CORE_SIZE=262144
       - WINDOW_FLANK_SIZE=32768
+    restart: always
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
   # 4. Воркер (Аналізатор)
   worker:
@@ -52,9 +68,12 @@ services:
       - GENETIC_CODE=1
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
     depends_on:
-      - rabbitmq
-      - postgres
-      - api
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
 
   # 5. Агрегатор (Збереження результатів)
   aggregator:
@@ -68,8 +87,10 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
     depends_on:
-      - rabbitmq
-      - postgres
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   # 6. Nextclade-воркер (клади, лінії, QC і мутації вірусних геномів)
   nextclade:
@@ -84,9 +105,12 @@ services:
     volumes:
       - run_data:/data
     depends_on:
-      - rabbitmq
-      - postgres
-      - api
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
 
   # 7. Воркер AMRFinderPlus (гени та мутації резистентності бактерій)
   amrfinder:
@@ -103,9 +127,12 @@ services:
     volumes:
       - run_data:/data
     depends_on:
-      - rabbitmq
-      - postgres
-      - api
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
 
   # 8. Центр Керування (API)
   api:
@@ -113,6 +140,8 @@ services:
       context: .
       dockerfile: PandemicShield.Api/Dockerfile
     container_name: pandemic_api
+    # Підстраховка: якщо міграція бази впаде з тимчасової причини, контейнер перезапуститься сам
+    restart: always
     ports:
       - "5020:8080" # Відкриваємо порт 5020 назовні для Postman і Фронтенду
     environment:
@@ -128,9 +157,12 @@ services:
     volumes:
       - run_data:/data
     depends_on:
-      - parser
-      - postgres
-      - rabbitmq
+      parser:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   run_data:
