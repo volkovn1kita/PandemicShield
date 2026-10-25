@@ -94,7 +94,7 @@ flutter run -d windows    # або -d macos, -d linux
 ### Тести
 
 ```bash
-dotnet test PandemicShield.slnx      # 209 тестів: ядро, Nextclade, AMRFinderPlus, MLST, FASTQ, імпорт, нагляд, звіти, Explorer
+dotnet test PandemicShield.slnx      # 210 тестів: ядро, Nextclade, AMRFinderPlus, MLST, FASTQ, імпорт, нагляд, звіти, Explorer
 ```
 
 ---
@@ -136,7 +136,7 @@ python docs/scripts/simulate_reads.py genome.fasta delta --platform illumina --d
 python docs/scripts/simulate_reads.py genome.fasta delta --platform nanopore --depth 30    # delta.fastq.gz
 ```
 
-Подробиці й обмеження (немає полірування Nanopore, вид для точкових мутацій) — [`STAGE5_READS_EXPLORER.md`](STAGE5_READS_EXPLORER.md).
+Подробиці й обмеження (полірування Nanopore лише Racon, вид для точкових мутацій) — [`STAGE5_READS_EXPLORER.md`](STAGE5_READS_EXPLORER.md).
 
 ### Довідкові бази
 

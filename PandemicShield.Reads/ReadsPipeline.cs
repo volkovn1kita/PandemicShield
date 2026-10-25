@@ -14,13 +14,19 @@ namespace PandemicShield.Reads
     /// найбільше прочитань; <c>samtools consensus</c> будує консенсус (N там, де глибина нижча за 10).</item>
     /// <item>Бактерії, Illumina: fastp обрізає адаптери й погані кінці, SKESA збирає контиги — тим самим асемблером
     /// NCBI збирає ізоляти Pathogen Detection.</item>
-    /// <item>Бактерії, Nanopore: Flye збирає довгі прочитання (часто до повних хромосом і плазмід).</item>
+    /// <item>Бактерії, Nanopore: Flye збирає довгі прочитання (часто до повних хромосом і плазмід), Racon полірує збірку.</item>
     /// </list>
     /// </summary>
     public sealed class ReadsPipeline
     {
         public const int MinDepth = 10;
         private const int MinMappedReads = 100;
+
+        /// <summary>
+        /// Проходи Racon після Flye. Перший прибирає більшість помилок довгих прочитань, другий — залишки;
+        /// далі виграш мізерний, а час росте.
+        /// </summary>
+        public const int RaconRounds = 2;
 
         private readonly string _referencesDir;
         private readonly int _threads;
@@ -124,8 +130,11 @@ namespace PandemicShield.Reads
                 await progress("Збирання геному з довгих прочитань (Flye)…");
                 string outDir = Path.Combine(workDir, "flye");
                 await RunAsync("flye", ["--nano-hq", .. files, "--out-dir", outDir, "--threads", _threads.ToString()]);
-                contigs = Path.Combine(outDir, "assembly.fasta");
-                assembler = "Flye";
+                string flyeContigs = Path.Combine(outDir, "assembly.fasta");
+                if (!File.Exists(flyeContigs) || new FileInfo(flyeContigs).Length == 0)
+                    throw new InvalidDataException("Flye не зібрав жодного контигу: замало прочитань або вони погані.");
+                contigs = await PolishAsync(flyeContigs, files, workDir, progress);
+                assembler = $"Flye + Racon ×{RaconRounds}";
             }
             else
             {
@@ -153,6 +162,36 @@ namespace PandemicShield.Reads
             string summary = $"{readsText}. Збірка {assembler}: {Number(stats.Contigs)} контигів, {Bases(stats.TotalLength)}, " +
                              $"N50 {Bases(stats.N50)}, найдовший {Bases(stats.Largest)}";
             return new ReadsResult(contigs, null, summary);
+        }
+
+        /// <summary>
+        /// Полірування Racon: прочитання знову вирівнюються на збірку (minimap2), і в кожній позиції лишається варіант,
+        /// який підтримує більшість прочитань. Так виправляються заміни, вставки й пропуски, які Flye переніс з довгих
+        /// прочитань у збірку (найчастіше — у повторах однієї літери), і гени перестають обриватися зайвим стоп-кодоном.
+        /// </summary>
+        private async Task<string> PolishAsync(string assembly, IReadOnlyList<string> files, string workDir, Func<string, Task> progress)
+        {
+            // Racon читає прочитання з одного файлу; кілька gzip-файлів, склеєних підряд, — теж коректний gzip.
+            string reads = files[0];
+            if (files.Count > 1)
+            {
+                reads = Path.Combine(workDir, files[0].EndsWith(".gz", StringComparison.OrdinalIgnoreCase) ? "reads.fastq.gz" : "reads.fastq");
+                await ShellAsync($"cat {string.Join(' ', files.Select(Q))} > {Q(reads)}");
+            }
+
+            string current = assembly;
+            string log = Path.Combine(workDir, "racon.log");
+            for (int round = 1; round <= RaconRounds; round++)
+            {
+                await progress($"Полірування збірки (Racon), прохід {round} з {RaconRounds}…");
+                string paf = Path.Combine(workDir, $"racon{round}.paf");
+                string polished = Path.Combine(workDir, $"racon{round}.fasta");
+                await ShellAsync($"minimap2 -x map-ont -t {_threads} {Q(current)} {Q(reads)} > {Q(paf)} 2>> {Q(log)}");
+                // -u: контиг без жодного вирівняного прочитання лишається як є, а не зникає зі збірки.
+                await ShellAsync($"racon -t {_threads} -u {Q(reads)} {Q(paf)} {Q(current)} > {Q(polished)} 2>> {Q(log)}");
+                current = polished;
+            }
+            return current;
         }
 
         // ==========================================

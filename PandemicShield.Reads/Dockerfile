@@ -33,6 +33,8 @@ FROM mambaorg/micromamba:2.3.3 AS final
 RUN micromamba install -y -n base -c conda-forge -c bioconda \
         minimap2=2.28 samtools=1.21 skesa=2.5.1 flye=2.9.5 fastp=0.24.0 seqkit=2.9.0 \
     && micromamba clean -a -y
+# Racon (полірування збірок Nanopore) — окремим шаром: кілька МБ, і великий шар вище не перезбирається.
+RUN micromamba install -y -n base -c conda-forge -c bioconda racon=1.5.0     && micromamba clean -a -y
 # Спільний том /data належить root, як і в інших воркерах; власна точка входу оминає активацію conda, тож PATH — явно.
 USER root
 ENV PATH=/opt/conda/bin:$PATH
