@@ -46,6 +46,14 @@ class Api {
     return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }
 
+  /// Двійковий файл (звіт PDF/CSV). Тайм-аут довший: PDF на сотні знахідок формується кілька секунд.
+  static Future<List<int>> download(String path, [Map<String, String>? query]) async {
+    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
+    final response = await http.get(uri).timeout(const Duration(seconds: 60));
+    _ensureSuccess(response);
+    return response.bodyBytes;
+  }
+
   /// Імпорт архіву NCBI Datasets (.zip): API зберігає його й розбирає у фоні.
   static Future<Map<String, dynamic>> importArchive({
     required String filePath,

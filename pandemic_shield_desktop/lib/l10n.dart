@@ -273,6 +273,13 @@ const Map<String, Map<AppLanguage, String>> _strings = {
   'import.failedSome': {_uk: 'з помилкою: {n}', _en: 'failed: {n}'},
 
   // Нагляд за резистентністю (NCBI Pathogen Detection)
+  // Звіт по зразку
+  'report.button': {_uk: 'Звіт', _en: 'Report'},
+  'report.pdf': {_uk: 'PDF для передачі', _en: 'PDF to share'},
+  'report.csv': {_uk: 'CSV для таблиць і скриптів', _en: 'CSV for spreadsheets and scripts'},
+  'report.saveTitle': {_uk: 'Зберегти звіт', _en: 'Save report'},
+  'report.saved': {_uk: 'Звіт збережено', _en: 'Report saved'},
+
   // MLST: тип штаму
   'mlst.title': {_uk: 'Тип штаму (MLST)', _en: 'Sequence type (MLST)'},
   'mlst.hint': {

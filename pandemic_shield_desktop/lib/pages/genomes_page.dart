@@ -6,6 +6,7 @@ import '../api.dart';
 import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
+import '../report_button.dart';
 import '../widgets.dart';
 import 'amr_view.dart';
 
@@ -182,6 +183,7 @@ class _GenomesPageState extends State<GenomesPage> {
                 onSubmitted: _runSearch,
               ),
             ),
+            if (run != null) ReportButton(run: run),
             if (run != null)
               OutlinedButton.icon(
                 onPressed: status == 1 || status == 2 ? null : _rerun,

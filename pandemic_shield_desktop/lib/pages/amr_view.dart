@@ -6,6 +6,7 @@ import '../api.dart';
 import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
+import '../report_button.dart';
 import '../widgets.dart';
 import 'genomes_page.dart' show RunPicker;
 
@@ -225,6 +226,7 @@ class _AmrRunViewState extends State<AmrRunView> {
                 onSubmitted: _runSearch,
               ),
             ),
+            ReportButton(run: run),
             OutlinedButton.icon(
               onPressed: status == 1 || status == 2 ? null : _rerun,
               icon: const Icon(Icons.refresh, size: 15),

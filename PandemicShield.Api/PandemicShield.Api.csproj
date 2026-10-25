@@ -13,7 +13,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
     <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- IBM Plex з кирилицею (ліцензія OFL, див. Reports/Fonts/LICENSE-OFL.txt): ті самі шрифти, що й у застосунку. -->
+    <EmbeddedResource Include="Reports\Fonts\*.ttf" />
   </ItemGroup>
 
   <ItemGroup>
