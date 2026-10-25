@@ -11,7 +11,7 @@
 
 | Що | Навіщо | Примітки |
 |---|---|---|
-| **Docker Desktop** (Windows/macOS) або Docker Engine + Compose (Linux) | Бекенд: 9 контейнерів | Виділіть Docker'у ≥ 6 ГБ RAM і ~10 ГБ диску |
+| **Docker Desktop** (Windows/macOS) або Docker Engine + Compose (Linux) | Бекенд: 10 контейнерів | Виділіть Docker'у ≥ 6 ГБ RAM і ~10 ГБ диску; для збирання бактерій з FASTQ — ≥ 10 ГБ RAM |
 | **Flutter SDK** 3.38+ (Dart 3.10+) | Desktop-застосунок | `flutter doctor` підкаже, чого бракує |
 | Windows: Visual Studio 2022 з «Desktop development with C++» | Збірка під Windows | Не VS Code, а саме Visual Studio |
 | macOS: Xcode | Збірка під macOS | |
@@ -60,7 +60,9 @@ flutter run -d windows    # або -d macos, -d linux
 | `PandemicShield.Nextclade.Tests/Data/sars-cov-2-examples.fasta` | Вірус, SARS-CoV-2 | 8 геномів: Beta, Alpha, Delta і кілька ліній Omicron (клади 20H–23I), лінії Pango, QC, мутації, сповіщення за правилами |
 | `PandemicShield.AmrFinder.Tests/Data/kpneumoniae-demo.fasta` | Бактерія, *Klebsiella pneumoniae* | Карбапенемази NDM-1 і OXA-48, ESBL CTX-M-15 |
 | `PandemicShield.AmrFinder.Tests/Data/amrfinder-test-contigs.fasta` | Бактерія, *Escherichia* | Колістин (`pmrB_C84R`), ванкоміцин (`vanG`), шига-токсини |
+| `PandemicShield.Nextclade.Tests/Data/sort/mixed.fasta` | Вірус, «Визначити автоматично» | SARS-CoV-2, грип H3N2 і RSV-A в одному файлі: кожен геном отримує свій набір даних |
 | `PandemicShield.Bio.Tests/Data/MN908947.fasta` | Пошук мотивів (ORF) | Референсний геном SARS-CoV-2, навчальний режим |
+| `PandemicShield.Bio.Tests/Data/MN908947.gb`, `pBR322.gb` | Вкладка **Explorer** | GenBank SARS-CoV-2 і кільцевої плазміди: карта ORF поруч з генами, білок, 3D-структура |
 
 ### Без власних файлів: відкриті дані NCBI
 
@@ -85,14 +87,14 @@ flutter run -d windows    # або -d macos, -d linux
 | Порт 5020/5433/5672 зайнятий | Змініть ліву частину `ports:` у `docker-compose.yaml`, а для 5020 — ще й `baseUrl` у `lib/api.dart` |
 | Подивитися черги | RabbitMQ UI: http://localhost:15672 (guest / guest) |
 
-> **Перевірка.** Усі 9 образів зібрано й прогнано наскрізно в Docker Desktop на Windows: холодний старт
+> **Перевірка.** Усі 10 образів зібрано й прогнано наскрізно в Docker Desktop на Windows: холодний старт
 > (`docker compose down -v`, потім `up`) піднімає все без ручного втручання, бо сервіси чекають на готовність
 > Postgres і RabbitMQ. Автоматичної збірки на кожен push (CI) поки немає — це перший пункт плану.
 
 ### Тести
 
 ```bash
-dotnet test PandemicShield.slnx      # 156 тестів: ядро, Nextclade, AMRFinderPlus, MLST, імпорт, нагляд, звіти
+dotnet test PandemicShield.slnx      # 209 тестів: ядро, Nextclade, AMRFinderPlus, MLST, FASTQ, імпорт, нагляд, звіти, Explorer
 ```
 
 ---
@@ -123,10 +125,18 @@ dotnet test PandemicShield.slnx      # 156 тестів: ядро, Nextclade, AM
 Корисно звіряти себе: Pathogen Detection рахує гени тим самим AMRFinderPlus. Якщо завантажити збірку
 звідти і проаналізувати в PandemicShield, список генів має збігтися з колонкою *AMR genotypes*.
 
-### Сирі рідси (FASTQ) — на майбутнє
+### Сирі прочитання (FASTQ)
 
-**SRA** (ncbi.nlm.nih.gov/sra) зберігає сирі дані секвенування. PandemicShield поки приймає лише
-готові геноми й контиги; підтримка FASTQ — у плані (`DIRECTION.md`, розділ 6).
+**SRA** (ncbi.nlm.nih.gov/sra) зберігає сирі дані секвенування. У «Новий аналіз» виберіть файли FASTQ
+(для Illumina — пару `_R1`/`_R2`) і платформу: вірус стане консенсусним геномом для Nextclade, бактерія — збіркою
+для AMRFinderPlus і MLST. Без справжніх даних прочитання можна змоделювати з будь-якого геному:
+
+```bash
+python docs/scripts/simulate_reads.py genome.fasta delta --platform illumina --depth 200   # delta_R1/R2.fastq.gz
+python docs/scripts/simulate_reads.py genome.fasta delta --platform nanopore --depth 30    # delta.fastq.gz
+```
+
+Подробиці й обмеження (немає полірування Nanopore, вид для точкових мутацій) — [`STAGE5_READS_EXPLORER.md`](STAGE5_READS_EXPLORER.md).
 
 ### Довідкові бази
 

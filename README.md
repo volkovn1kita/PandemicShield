@@ -6,7 +6,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql)
 
-**Pandemic Shield** is an event-driven, self-hosted platform for viral genomic surveillance. Upload `.fasta` genomes and it runs [Nextclade](https://docs.nextstrain.org/projects/nextclade/) offline to assign clades and Pango lineages, check sequence quality and call every mutation; it keeps the history of your samples, lets you search a mutation across all of them and raises alerts on the variants you define (e.g. `S:E484K`, `clade:Delta`, `lineage:BA.2.86*`). For bacterial genome assemblies it runs [NCBI AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/) offline to find antimicrobial resistance genes and point mutations (e.g. carbapenemases such as NDM and OXA-48) and summarises the predicted resistance per antibiotic group, and types the strain with MLST (e.g. *K. pneumoniae* ST147). Open NCBI data is a first-class input: import up to 500 accessions or an NCBI Datasets archive at once, and follow antimicrobial resistance in Ukraine on a dashboard built from NCBI Pathogen Detection. Every sample can be exported as a PDF or CSV report. A built-in ORF scanner (6 reading frames, exact protein motifs) remains as a learning mode. The desktop app speaks Ukrainian and English.
+**Pandemic Shield** is an event-driven, self-hosted platform for viral genomic surveillance. Upload `.fasta` genomes and it runs [Nextclade](https://docs.nextstrain.org/projects/nextclade/) offline to assign clades and Pango lineages, check sequence quality and call every mutation; it keeps the history of your samples, lets you search a mutation across all of them and raises alerts on the variants you define (e.g. `S:E484K`, `clade:Delta`, `lineage:BA.2.86*`). For bacterial genome assemblies it runs [NCBI AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/) offline to find antimicrobial resistance genes and point mutations (e.g. carbapenemases such as NDM and OXA-48) and summarises the predicted resistance per antibiotic group, and types the strain with MLST (e.g. *K. pneumoniae* ST147). Open NCBI data is a first-class input: import up to 500 accessions or an NCBI Datasets archive at once, and follow antimicrobial resistance in Ukraine on a dashboard built from NCBI Pathogen Detection. Raw reads are accepted too: Illumina or Nanopore FASTQ becomes a viral consensus genome or a bacterial assembly (SKESA, Flye). Mixed files are fine: `nextclade sort` picks the right dataset for every sequence. The app updates live over SignalR. Every sample can be exported as a PDF or CSV report. The Explorer tab is a learning mode: open a FASTA or GenBank file, see ORFs in 6 frames next to the annotated genes, translate one, search a motif, find its 3D structure in PDB and AlphaFold, and align two sequences. The desktop app speaks Ukrainian and English.
 
 ---
 
@@ -64,7 +64,9 @@ This project implements a highly scalable pipeline to process gigabytes of data 
 * **Surveillance (in the AMRFinderPlus worker):** Streams NCBI Pathogen Detection `amr.metadata.tsv` files (up to ~830 MB), keeps isolates from the chosen countries and classifies their genes with the AMRFinderPlus database.
 * **Worker Service (.NET Worker):** Subscribes to RabbitMQ and runs the Bio library on each window (`MutationScannerService`).
 * **Aggregator/DB Context:** EF Core implementation over PostgreSQL to store dictionaries and threat logs.
-* **Frontend (Flutter Desktop):** A modern, clinical-themed desktop app with background auto-polling for real-time result synchronization.
+* **Reads worker (`PandemicShield.Reads`):** Consumes `reads_jobs`: minimap2 + samtools consensus for viruses, fastp + SKESA (Illumina) or Flye (Nanopore) for bacteria, then hands the genome to the normal pipeline.
+* **Live updates:** every service publishes change events to the RabbitMQ fanout exchange `pandemic_events`; the API relays them to the SignalR hub `/hubs/events`.
+* **Frontend (Flutter Desktop):** A modern, clinical-themed desktop app that refreshes on SignalR events (polling only as a fallback).
 
 ---
 
@@ -77,6 +79,9 @@ This project implements a highly scalable pipeline to process gigabytes of data 
 * **Bacterial resistance (AMRFinderPlus):** resistance genes and species-specific point mutations, predicted resistance per antibiotic group, rules such as `subclass:CARBAPENEM` or `gene:blaKPC*`.
 * **Cross-sample search:** which genomes in all runs carry `S:E484K`? Which isolates carry `blaNDM`? Which are ST147?
 * **Bulk import of open NCBI data:** up to 500 accessions (`OQ291490.1`, `GCA_009887825.1`) or an NCBI Datasets / NCBI Virus ZIP. Viral sequences become one run; every bacterial assembly becomes its own run with the species taken from NCBI metadata.
+* **Automatic dataset choice:** `nextclade sort` assigns every sequence its own dataset, so SARS-CoV-2, influenza and RSV can share one FASTA.
+* **Raw reads (FASTQ):** Illumina or Nanopore reads in, consensus genome or assembly out, with read and coverage stats in the report.
+* **Explorer:** ORF map in 6 frames with GenBank annotations and circular plasmids, protein and motif view, RCSB PDB and AlphaFold DB structures, pairwise alignment.
 * **AMR surveillance dashboard:** NCBI Pathogen Detection for a bacterial group and country (Ukraine by default): isolates per year with and without carbapenemases, carbapenemase families, gene × year heatmap, regions, sources, and one click to import and analyse any isolate yourself.
 * **MLST sequence typing:** ST, PubMLST scheme and allele profile for every bacterial run; rules such as `st:klebsiella/147`.
 * **Sample reports:** PDF (Ukrainian / English, with database versions for reproducibility) and CSV (stable columns for spreadsheets and scripts).
