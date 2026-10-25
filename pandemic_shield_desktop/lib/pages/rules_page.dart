@@ -22,6 +22,15 @@ bool isAmrNotation(String notation) => RegExp(r'^(gene|class|subclass):', caseSe
   final lineage = RegExp(r'^lineage:([A-Za-z]{1,3}(\.\d+)*\*?)$', caseSensitive: false).firstMatch(value);
   if (lineage != null) return (key: 'rules.kind.lineage', args: {'name': lineage[1]!.toUpperCase()});
 
+  // Тип штаму MLST: st:147 або зі схемою PubMLST st:klebsiella/147.
+  final st = RegExp(r'^st:(?:([A-Za-z][A-Za-z0-9_]*)/)?(?:ST)?(\d{1,6})$', caseSensitive: false).firstMatch(value);
+  if (st != null) {
+    final number = int.parse(st[2]!).toString();
+    return st[1] == null
+        ? (key: 'rules.kind.st', args: {'st': number})
+        : (key: 'rules.kind.stScheme', args: {'st': number, 'scheme': st[1]!.toLowerCase()});
+  }
+
   final amr = RegExp(r'^(gene|class|subclass):(.+)$', caseSensitive: false).firstMatch(value);
   if (amr != null) {
     final kind = amr[1]!.toLowerCase();
@@ -312,6 +321,7 @@ class _NewRuleDialogState extends State<_NewRuleDialog> {
                     'lineage:BA.2.86*',
                     'gene:blaKPC*',
                     'subclass:CARBAPENEM',
+                    'st:klebsiella/147',
                   ])
                     InkWell(
                       borderRadius: BorderRadius.circular(4),

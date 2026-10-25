@@ -14,7 +14,10 @@ namespace PandemicShield.Bio.Variants
         // Гени й класи резистентності з AMRFinderPlus (бактерії).
         AmrGene,
         AmrClass,
-        AmrSubclass
+        AmrSubclass,
+
+        // Тип штаму за MLST (sequence type): ST147, ST11.
+        SequenceType
     }
 
     /// <summary>
@@ -29,6 +32,8 @@ namespace PandemicShield.Bio.Variants
     /// <item><c>lineage:BA.2.86*</c> — лінія Pango; <c>*</c> означає «разом із нащадками»</item>
     /// <item><c>gene:blaKPC*</c> — ген резистентності AMRFinderPlus (символ; <c>*</c> — будь-який алель, наприклад blaKPC-2)</item>
     /// <item><c>class:AMINOGLYCOSIDE</c>, <c>subclass:CARBAPENEM</c> — клас або підклас антибіотиків, до яких передбачено стійкість</item>
+    /// <item><c>st:klebsiella/147</c> — тип штаму за MLST у схемі PubMLST; <c>st:147</c> — у будь-якій схемі
+    /// (номери ST повторюються між схемами: ST131 у E. coli і в Klebsiella — різні штами)</item>
     /// </list>
     /// </summary>
     public sealed partial record VariantPattern(
@@ -46,6 +51,18 @@ namespace PandemicShield.Bio.Variants
 
         public bool IsAmr => Kind is VariantKind.AmrGene or VariantKind.AmrClass or VariantKind.AmrSubclass;
 
+        public bool IsMlst => Kind is VariantKind.SequenceType;
+
+        /// <summary>Чи цей тип штаму підпадає під правило st: (схема перевіряється, лише якщо її вказано).</summary>
+        public bool MatchesSequenceType(string scheme, string sequenceType)
+        {
+            if (Kind != VariantKind.SequenceType) return false;
+            int slash = Name!.IndexOf('/');
+            return slash < 0
+                ? Name == sequenceType
+                : Name[(slash + 1)..] == sequenceType && Name[..slash].Equals(scheme, StringComparison.OrdinalIgnoreCase);
+        }
+
         public override string ToString() => Kind switch
         {
             VariantKind.NucleotideSubstitution => $"{Ref}{Position}{(AnyAlt ? "*" : Alt.ToString())}",
@@ -57,6 +74,7 @@ namespace PandemicShield.Bio.Variants
             VariantKind.AmrGene => $"gene:{Name}",
             VariantKind.AmrClass => $"class:{Name}",
             VariantKind.AmrSubclass => $"subclass:{Name}",
+            VariantKind.SequenceType => $"st:{Name}",
             _ => throw new InvalidOperationException()
         };
 
@@ -90,6 +108,21 @@ namespace PandemicShield.Bio.Variants
                 if (prefix.Equals("lineage", StringComparison.OrdinalIgnoreCase) && LineageRegex().IsMatch(rest))
                 {
                     pattern = new VariantPattern(VariantKind.Lineage, null, 0, null, null, rest.ToUpperInvariant());
+                    return true;
+                }
+
+                if (prefix.Equals("st", StringComparison.OrdinalIgnoreCase))
+                {
+                    // "st:147" і "st:ST147" — одне й те саме; mlst повертає ST без префікса. Схема — як у mlst (klebsiella).
+                    var st = SequenceTypeRegex().Match(rest);
+                    if (!st.Success)
+                    {
+                        error = $"Тип штаму — це число, можна зі схемою: st:147 або st:klebsiella/147, а не «{rest}».";
+                        return false;
+                    }
+                    string number = int.Parse(st.Groups["st"].Value).ToString();
+                    string name = st.Groups["scheme"].Success ? $"{st.Groups["scheme"].Value.ToLowerInvariant()}/{number}" : number;
+                    pattern = new VariantPattern(VariantKind.SequenceType, null, 0, null, null, name);
                     return true;
                 }
 
@@ -181,5 +214,8 @@ namespace PandemicShield.Bio.Variants
 
         [GeneratedRegex(@"^[A-Za-z][A-Za-z0-9 _\-]*$")]
         private static partial Regex AmrClassRegex();
+
+        [GeneratedRegex(@"^(?:(?<scheme>[A-Za-z][A-Za-z0-9_]*)/)?(?:ST)?(?<st>\d{1,6})$", RegexOptions.IgnoreCase)]
+        private static partial Regex SequenceTypeRegex();
     }
 }

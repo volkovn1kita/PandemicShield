@@ -67,6 +67,11 @@ String drugName(BuildContext context, String subclass) {
   return lower.isEmpty ? lower : lower[0].toUpperCase() + lower.substring(1);
 }
 
+/// MLST повертає номер ST або «-», якщо профіль новий чи неповний.
+bool isSequenceType(Object? value) => value is String && RegExp(r'^\d+$').hasMatch(value);
+
+final _stQuery = RegExp(r'^(?:ST)?(\d{1,6})$', caseSensitive: false);
+
 /// Вид у форматі AMRFinderPlus (Klebsiella_pneumoniae) → «Klebsiella pneumoniae».
 String organismName(String? organism) => organism == null ? '—' : organism.replaceAll('_', ' ');
 
@@ -86,7 +91,10 @@ class _AmrRunViewState extends State<AmrRunView> {
   final _search = TextEditingController();
   List<dynamic> _hits = [];
   List<dynamic> _alerts = [];
+  List<dynamic> _mlstAlerts = [];
   List<dynamic>? _searchHits;
+  // Пошук за типом штаму (ST147) замість гена: інша таблиця результатів.
+  bool _searchBySt = false;
   bool _loaded = false;
   String _type = 'all';
   Timer? _timer;
@@ -115,6 +123,7 @@ class _AmrRunViewState extends State<AmrRunView> {
       setState(() {
         _hits = results[0];
         _alerts = results[1].where((t) => t['source'] == 'amrfinder').toList();
+        _mlstAlerts = results[1].where((t) => t['source'] == 'mlst').toList();
         _loaded = true;
       });
     } catch (_) {}
@@ -127,8 +136,14 @@ class _AmrRunViewState extends State<AmrRunView> {
       return;
     }
     try {
-      final hits = await Api.list('/amr/search', {'gene': gene});
-      if (mounted) setState(() => _searchHits = hits);
+      final st = _stQuery.firstMatch(gene);
+      final hits = st != null ? await Api.list('/mlst/search', {'st': st[1]!}) : await Api.list('/amr/search', {'gene': gene});
+      if (mounted) {
+        setState(() {
+          _searchBySt = st != null;
+          _searchHits = hits;
+        });
+      }
     } catch (_) {
       if (mounted) showMessage(context, context.tr('common.connectionFailed'), error: true);
     }
@@ -254,9 +269,65 @@ class _AmrRunViewState extends State<AmrRunView> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
           child: Text(summary, style: TextStyle(fontSize: 12.5, color: p.muted)),
         ),
+        _buildMlst(run),
         _buildResistance(alertSymbols),
         _buildHits(alertSymbols),
       ],
+    );
+  }
+
+  /// Тип штаму: ген показує «що» в бактерії, ST — «чий це штам». Той самий ST в інших ізолятах — можлива спільна лінія.
+  Widget _buildMlst(dynamic run) {
+    final p = context.p;
+    final status = (run['mlstStatus'] ?? 0) as int;
+    if (status == 0) return const SizedBox.shrink();
+    final String? st = run['mlstSequenceType'];
+    final known = isSequenceType(st);
+
+    final Widget value = switch (status) {
+      1 || 2 => Text(context.tr('mlst.waiting'), style: TextStyle(fontSize: 13, color: p.muted)),
+      4 => Text(run['mlstMessage'] ?? context.tr('nc.failed'), style: TextStyle(fontSize: 13, color: p.danger)),
+      _ => Wrap(
+        spacing: 10,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (known) MutationToken('ST$st', highlight: _mlstAlerts.isNotEmpty) else Text('ST —', style: mono(context, size: 13)),
+          if (run['mlstScheme'] != null) Text(run['mlstScheme'], style: TextStyle(fontSize: 12.5, color: p.muted)),
+          if (run['mlstAlleles'] != null) Text(run['mlstAlleles'], style: mono(context, size: 12, color: p.muted)),
+          if (known)
+            TextButton(
+              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 24)),
+              onPressed: () {
+                _search.text = 'ST$st';
+                _runSearch(_search.text);
+              },
+              child: Text(context.tr('mlst.findOthers', {'st': st})),
+            ),
+        ],
+      ),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(context.tr('mlst.title'), style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text)),
+          const SizedBox(height: 4),
+          Text(
+            status == 3 && !known ? (run['mlstMessage'] ?? context.tr('mlst.hint')) : context.tr('mlst.hint'),
+            style: TextStyle(fontSize: 12, color: p.muted),
+          ),
+          const SizedBox(height: 10),
+          value,
+          for (final a in _mlstAlerts)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(a['threatName'], style: TextStyle(fontSize: 12.5, color: p.danger)),
+            ),
+        ],
+      ),
     );
   }
 
@@ -444,6 +515,7 @@ class _AmrRunViewState extends State<AmrRunView> {
   }
 
   Widget _buildSearchResults() {
+    if (_searchBySt) return _buildStResults();
     final p = context.p;
     final hits = _searchHits!;
     final label = _search.text.trim();
@@ -494,6 +566,52 @@ class _AmrRunViewState extends State<AmrRunView> {
                       overflow: TextOverflow.ellipsis,
                       style: mono(context, size: 12, color: p.muted),
                     ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Ізоляти з тим самим типом штаму в усіх запусках.
+  Widget _buildStResults() {
+    final p = context.p;
+    final hits = _searchHits!;
+    final label = _search.text.trim().toUpperCase();
+    final columns = [
+      Col(context.tr('col.run'), flex: 4),
+      Col(context.tr('upload.organism'), flex: 2),
+      Col(context.tr('mlst.scheme'), flex: 2),
+      Col(context.tr('col.started'), width: 110, alignRight: true),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: Text(
+            hits.isEmpty ? context.tr('mlst.searchNone', {'label': label}) : context.tr('mlst.searchResult', {'label': label, 'n': hits.length}),
+            style: TextStyle(fontSize: 12.5, color: p.muted),
+          ),
+        ),
+        if (hits.isNotEmpty) ...[
+          TableHeader(columns),
+          Expanded(
+            child: ListView.builder(
+              itemCount: hits.length,
+              itemBuilder: (context, i) {
+                final hit = hits[i];
+                return TableRowItem(
+                  columns: columns,
+                  onTap: () => widget.onSelectRun(hit['runId']),
+                  cells: [
+                    Text(hit['fileName'], overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
+                    Text(organismName(hit['amrOrganism']), overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: p.muted)),
+                    Text(hit['mlstScheme'] ?? '—', style: mono(context, size: 12.5, color: p.muted)),
+                    Text(relativeTime(context, hit['startedAt']), style: TextStyle(fontSize: 13, color: p.muted)),
                   ],
                 );
               },

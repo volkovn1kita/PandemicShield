@@ -96,7 +96,12 @@ namespace PandemicShield.Api.Extensions
                 run.MarkStreamed(response.RecordCount, response.BaseCount, response.InvalidSymbolCount,
                     response.ChunkProcessed, response.Message);
                 if (runNextclade) run.RequestNextclade(request.NextcladeDataset!);
-                if (runAmr) run.RequestAmr(organism);
+                if (runAmr)
+                {
+                    run.RequestAmr(organism);
+                    // Тип штаму (MLST) рахується для тієї самої збірки паралельно з AMRFinderPlus.
+                    run.RequestMlst();
+                }
                 await db.SaveChangesAsync(cancellationToken);
 
                 if (runNextclade)
@@ -112,6 +117,12 @@ namespace PandemicShield.Api.Extensions
                 if (runAmr)
                 {
                     await _jobs.PublishAsync(JobPublisher.AmrFinderQueue, new AmrJobMessage
+                    {
+                        RunId = run.Id,
+                        FilePath = inputPath,
+                        Organism = organism
+                    });
+                    await _jobs.PublishAsync(JobPublisher.MlstQueue, new MlstJobMessage
                     {
                         RunId = run.Id,
                         FilePath = inputPath,

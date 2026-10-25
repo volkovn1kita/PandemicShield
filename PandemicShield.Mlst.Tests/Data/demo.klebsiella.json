@@ -1,0 +1,17 @@
+[
+   {
+      "filename" : "/data/kpneumoniae-demo.fasta",
+      "scheme" : "klebsiella",
+      "id" : "demo",
+      "sequence_type" : "-",
+      "alleles" : {
+         "mdh" : "-",
+         "pgi" : "-",
+         "infB" : "-",
+         "rpoB" : "-",
+         "tonB" : "-",
+         "gapA" : "-",
+         "phoE" : "-"
+      }
+   }
+]

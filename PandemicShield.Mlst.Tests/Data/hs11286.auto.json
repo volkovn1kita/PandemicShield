@@ -1,0 +1,17 @@
+[
+   {
+      "alleles" : {
+         "rpoB" : "1",
+         "gapA" : "3",
+         "tonB" : "4",
+         "phoE" : "1",
+         "infB" : "3",
+         "mdh" : "1",
+         "pgi" : "1"
+      },
+      "sequence_type" : "11",
+      "filename" : "/data/hs11286.fna",
+      "scheme" : "klebsiella",
+      "id" : "HS11286"
+   }
+]

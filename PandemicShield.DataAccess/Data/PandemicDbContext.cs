@@ -31,6 +31,9 @@ namespace PandemicShield.DataAccess.Data
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.Status).HasConversion<string>();
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.NextcladeStatus).HasConversion<string>();
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.AmrStatus).HasConversion<string>();
+            modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.MlstStatus).HasConversion<string>();
+            // Пошук «у яких ізолятах ST147?» між запусками.
+            modelBuilder.Entity<AnalysisRunEntity>().HasIndex(e => e.MlstSequenceType);
             modelBuilder.Entity<AnalysisRunEntity>().HasIndex(e => e.ImportId);
             // Видалення пакета імпорту не видаляє вже проаналізовані зразки.
             modelBuilder.Entity<AnalysisRunEntity>()

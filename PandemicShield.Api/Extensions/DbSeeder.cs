@@ -112,6 +112,35 @@ namespace PandemicShield.Api.Extensions
                 db.SaveChanges();
                 Console.WriteLine("Правила AMRFinderPlus завантажено.");
             }
+
+            if (!db.VariantMarkers.Any(m => m.Notation.StartsWith("st:")))
+            {
+                // Міжнародні клони високого ризику (high-risk clones): ST описує «чий це штам», а не лише які в нього гени.
+                // Схема вказана явно, бо номери ST повторюються між схемами PubMLST.
+                db.VariantMarkers.AddRange(
+                    new VariantMarkerEntity("K. pneumoniae ST147: клон високого ризику з NDM та OXA-48",
+                        "st:klebsiella/147", null,
+                        "Один з найпоширеніших карбапенем-резистентних клонів; його знаходять у пацієнтах, евакуйованих з України до шпиталів ЄС.",
+                        "https://pubmlst.org/organisms/klebsiella-pneumoniae"),
+                    new VariantMarkerEntity("K. pneumoniae ST395: клон високого ризику",
+                        "st:klebsiella/395", null, "Поширений у Східній Європі, часто несе OXA-48 і NDM.", null),
+                    new VariantMarkerEntity("K. pneumoniae ST307: клон високого ризику",
+                        "st:klebsiella/307", null, "Глобальний клон, зазвичай з CTX-M-15, дедалі частіше з карбапенемазами.", null),
+                    new VariantMarkerEntity("K. pneumoniae ST23: гіпервірулентний клон (hvKp)",
+                        "st:klebsiella/23", null,
+                        "Класичний гіпервірулентний клон: уражає й здорових людей (абсцеси печінки). У поєднанні з карбапенемазою " +
+                        "(конвергентний штам) — одна з найнебезпечніших комбінацій.", null),
+                    new VariantMarkerEntity("K. pneumoniae ST258: клональна група CG258 (KPC)",
+                        "st:klebsiella/258", null, "Класичний носій карбапенемази KPC у США та Південній Європі.", null),
+                    new VariantMarkerEntity("E. coli ST131: глобальний клон з ESBL",
+                        "st:ecoli_achtman_4/131", null, "Найпоширеніша причина позалікарняних інфекцій сечових шляхів з CTX-M-15.", null),
+                    new VariantMarkerEntity("A. baumannii ST2 (Pasteur): міжнародний клон IC2",
+                        "st:abaumannii_2/2", null, "Домінує серед карбапенем-резистентних A. baumannii, часто з OXA-23.", null)
+                );
+
+                db.SaveChanges();
+                Console.WriteLine("Правила MLST завантажено.");
+            }
         }
     }
 }

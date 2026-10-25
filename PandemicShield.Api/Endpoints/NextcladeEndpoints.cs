@@ -88,8 +88,8 @@ namespace PandemicShield.Api.Endpoints
                     return Results.BadRequest(error);
 
                 string? dataset = string.IsNullOrWhiteSpace(request.Dataset) ? null : request.Dataset.Trim();
-                if (dataset != null && pattern.IsAmr)
-                    return Results.BadRequest("Правила для генів резистентності (gene:, class:, subclass:) не прив'язуються до набору даних Nextclade.");
+                if (dataset != null && (pattern.IsAmr || pattern.IsMlst))
+                    return Results.BadRequest("Правила для бактерій (gene:, class:, subclass:, st:) не прив'язуються до набору даних Nextclade.");
                 if (dataset != null && !nextclade.IsKnownDataset(dataset))
                     return Results.BadRequest($"Невідомий набір даних Nextclade: {dataset}");
 

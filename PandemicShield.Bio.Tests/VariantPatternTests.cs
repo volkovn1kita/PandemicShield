@@ -47,7 +47,35 @@ namespace PandemicShield.Bio.Tests
         }
 
         [Theory]
+        [InlineData("st:147")]
+        [InlineData("ST:ST147")]
+        [InlineData("st:0147")]
+        public void Parses_sequence_type(string text)
+        {
+            var pattern = VariantPattern.Parse(text);
+
+            Assert.Equal((VariantKind.SequenceType, "147", true, false), (pattern.Kind, pattern.Name, pattern.IsMlst, pattern.IsAmr));
+            Assert.Equal("st:147", pattern.ToString());
+        }
+
+        [Fact]
+        public void Sequence_type_with_scheme_matches_only_that_scheme()
+        {
+            var klebsiella = VariantPattern.Parse("st:Klebsiella/ST147");
+            Assert.Equal("st:klebsiella/147", klebsiella.ToString());
+            Assert.True(klebsiella.MatchesSequenceType("klebsiella", "147"));
+            Assert.False(klebsiella.MatchesSequenceType("ecoli_achtman_4", "147"));
+            Assert.False(klebsiella.MatchesSequenceType("klebsiella", "1470"));
+
+            // Без схеми — будь-яка схема.
+            Assert.True(VariantPattern.Parse("st:131").MatchesSequenceType("ecoli_achtman_4", "131"));
+            Assert.False(VariantPattern.Parse("st:131").MatchesSequenceType("ecoli_achtman_4", "-"));
+        }
+
+        [Theory]
         [InlineData("")]
+        [InlineData("st:Delta")]
+        [InlineData("st:klebsiella/")]
         [InlineData("S:D0G")]
         [InlineData("S:D614D")]
         [InlineData("A23403A")]

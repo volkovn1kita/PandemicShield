@@ -134,7 +134,29 @@ services:
       api:
         condition: service_started
 
-  # 8. Центр Керування (API)
+  # 8. Воркер MLST (тип штаму бактерій за схемами PubMLST)
+  mlst:
+    build:
+      context: .
+      dockerfile: PandemicShield.Mlst/Dockerfile
+    container_name: pandemic_mlst
+    # Образ staphb/mlst зібрано лише під linux/amd64; на Apple Silicon Docker запустить його через емуляцію
+    platform: linux/amd64
+    restart: always
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=pandemic_shield_db;Username=adminpostgres;Password=rootpassword
+    volumes:
+      - run_data:/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+  # 9. Центр Керування (API)
   api:
     build:
       context: .

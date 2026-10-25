@@ -6,7 +6,7 @@ import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'amr_view.dart' show OrganismDropdown, organismName;
+import 'amr_view.dart' show OrganismDropdown, isSequenceType, organismName;
 import 'import_dialog.dart';
 
 // ==========================================
@@ -87,7 +87,10 @@ class RunsPage extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      bacterial ? organismName(run['amrOrganism']) : datasetName(run['nextcladeDataset']),
+                      bacterial
+                          ? // ST спершу: назва виду довга й обрізається, а тип штаму — головна відмінність між ізолятами.
+                            [if (isSequenceType(run['mlstSequenceType'])) 'ST${run['mlstSequenceType']}', organismName(run['amrOrganism'])].join(' · ')
+                          : datasetName(run['nextcladeDataset']),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,

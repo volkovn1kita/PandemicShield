@@ -211,10 +211,12 @@ const Map<String, Map<AppLanguage, String>> _strings = {
     _uk: 'Знахідки й сповіщення AMRFinderPlus цього запуску буде замінено.',
     _en: 'AMRFinderPlus findings and alerts of this run will be replaced.',
   },
-  'amr.search': {_uk: 'Пошук гена, напр. blaNDM', _en: 'Find gene, e.g. blaNDM'},
+  'amr.search': {_uk: 'Пошук гена або ST, напр. blaNDM, ST147', _en: 'Find gene or ST, e.g. blaNDM, ST147'},
   'amr.searchResult': {_uk: '{label}: {n} знахідок у запусках', _en: '{label}: {n} findings in runs'},
   'amr.searchNone': {_uk: '{label}: не знайдено в жодному запуску', _en: '{label}: not found in any run'},
   'source.amrfinder': {_uk: 'AMRFinderPlus', _en: 'AMRFinderPlus'},
+  'source.mlst': {_uk: 'MLST', _en: 'MLST'},
+  'alerts.mlstHint': {_uk: 'Тип штаму описує весь геном, позиції немає', _en: 'A sequence type describes the whole genome, no position'},
   'alerts.contigHint': {_uk: 'Координати в контигу збірки', _en: 'Coordinates in the assembly contig'},
   'method.ALLELEX': {_uk: 'Точний відомий алель', _en: 'Exact known allele'},
   'method.EXACTX': {_uk: 'Точний збіг з референсом', _en: 'Exact match to reference'},
@@ -271,6 +273,22 @@ const Map<String, Map<AppLanguage, String>> _strings = {
   'import.failedSome': {_uk: 'з помилкою: {n}', _en: 'failed: {n}'},
 
   // Нагляд за резистентністю (NCBI Pathogen Detection)
+  // MLST: тип штаму
+  'mlst.title': {_uk: 'Тип штаму (MLST)', _en: 'Sequence type (MLST)'},
+  'mlst.hint': {
+    _uk: 'Алелі семи генів «домашнього господарства» за схемою PubMLST. Ген показує, що є в бактерії, а ST — чий це штам: '
+        'той самий ST в інших ізолятах може означати спільну лінію або спалах.',
+    _en: 'Alleles of seven housekeeping genes by the PubMLST scheme. Genes tell what the bacterium carries, the ST tells which strain it is: '
+        'the same ST in other isolates may mean a shared lineage or an outbreak.',
+  },
+  'mlst.waiting': {_uk: 'MLST визначає тип штаму…', _en: 'MLST is typing the strain…'},
+  'mlst.findOthers': {_uk: 'Знайти ST{st} в інших запусках', _en: 'Find ST{st} in other runs'},
+  'mlst.scheme': {_uk: 'Схема', _en: 'Scheme'},
+  'mlst.searchResult': {_uk: '{label}: {n} ізолятів', _en: '{label}: {n} isolates'},
+  'mlst.searchNone': {_uk: '{label}: не знайдено в жодному запуску', _en: '{label}: not found in any run'},
+  'rules.kind.st': {_uk: 'Тип штаму ST{st} (будь-яка схема MLST)', _en: 'Sequence type ST{st} (any MLST scheme)'},
+  'rules.kind.stScheme': {_uk: 'Тип штаму ST{st} у схемі {scheme}', _en: 'Sequence type ST{st} in scheme {scheme}'},
+
   'nav.surveillance': {_uk: 'Нагляд AMR', _en: 'AMR surveillance'},
   'surv.sync': {_uk: 'Оновити з NCBI', _en: 'Update from NCBI'},
   'surv.syncTitle': {_uk: 'Оновити {taxgroup} з NCBI Pathogen Detection', _en: 'Update {taxgroup} from NCBI Pathogen Detection'},
@@ -349,22 +367,4 @@ const Map<String, Map<AppLanguage, String>> _strings = {
     _en: 'Source: NCBI Pathogen Detection {pdg}, genes by AMRFinderPlus {amrfinder} (databases {db}). '
         'These are isolates labs chose to publish: not a representative sample, and a gene is a prediction, not an antibiogram.',
   },
-  'drug.CARBAPENEM': {_uk: 'карбапенеми', _en: 'carbapenems'},
-  'drug.CEPHALOSPORIN': {_uk: 'цефалоспорини', _en: 'cephalosporins'},
-  'drug.BETA-LACTAM': {_uk: 'β-лактами', _en: 'beta-lactams'},
-  'drug.QUINOLONE': {_uk: 'хінолони', _en: 'quinolones'},
-  'drug.AMINOGLYCOSIDE': {_uk: 'аміноглікозиди', _en: 'aminoglycosides'},
-  'drug.SULFONAMIDE': {_uk: 'сульфаніламіди', _en: 'sulfonamides'},
-  'drug.TRIMETHOPRIM': {_uk: 'триметоприм', _en: 'trimethoprim'},
-  'drug.TETRACYCLINE': {_uk: 'тетрацикліни', _en: 'tetracyclines'},
-  'drug.FOSFOMYCIN': {_uk: 'фосфоміцин', _en: 'fosfomycin'},
-  'drug.COLISTIN': {_uk: 'колістин', _en: 'colistin'},
-  'drug.EFFLUX': {_uk: 'помпа виведення', _en: 'efflux pump'},
-  'drug.PHENICOL': {_uk: 'феніколи', _en: 'phenicols'},
-  'drug.CHLORAMPHENICOL': {_uk: 'хлорамфенікол', _en: 'chloramphenicol'},
-  'drug.NITROFURANTOIN': {_uk: 'нітрофурантоїн', _en: 'nitrofurantoin'},
-  'drug.MACROLIDE': {_uk: 'макроліди', _en: 'macrolides'},
-  'drug.STREPTOMYCIN': {_uk: 'стрептоміцин', _en: 'streptomycin'},
-  'drug.GENTAMICIN': {_uk: 'гентаміцин', _en: 'gentamicin'},
-  'drug.AMIKACIN': {_uk: 'амікацин', _en: 'amikacin'},
 };

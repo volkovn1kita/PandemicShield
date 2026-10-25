@@ -8,6 +8,7 @@ import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'amr_view.dart' show drugName, isSequenceType;
 
 // ==========================================
 // SURVEILLANCE: стійкість до антибіотиків на відкритих даних NCBI Pathogen Detection
@@ -301,7 +302,7 @@ class _SurveillancePageState extends State<SurveillancePage> {
               child: _HBars(
                 items: [
                   for (final g in List<dynamic>.from(s['topGenes']).take(8))
-                    (g['family'] as String, g['isolates'] as int, drugClassName(context, g['subclass'] ?? g['class'])),
+                    (g['family'] as String, g['isolates'] as int, drugName(context, ((g['subclass'] ?? g['class']) as String).split('/').first)),
                 ],
                 total: total,
                 color: p.chartRest,
@@ -354,7 +355,11 @@ class _SurveillancePageState extends State<SurveillancePage> {
           child: _IsolateTable(
             isolates: _isolates,
             importing: _importing,
-            runIds: {for (final r in widget.store.runs) if (r['sourceAccession'] != null) r['sourceAccession'] as String: r['id'] as String},
+            // Найновіший запуск кожної збірки (store.runs упорядковано від нових до старих).
+            runs: {
+              for (final r in widget.store.runs.reversed)
+                if (r['sourceAccession'] != null) r['sourceAccession'] as String: r,
+            },
             onAnalyse: _analyse,
             onOpenRun: widget.onOpenRun,
           ),
@@ -387,14 +392,6 @@ String taxgroupName(String taxgroup) => switch (taxgroup) {
   'Escherichia_coli_Shigella' => 'Escherichia coli / Shigella',
   _ => taxgroup.replaceAll('_', ' '),
 };
-
-/// Назва класу антибіотиків українською для підписів (AMRFinderPlus пише англійською великими літерами).
-String drugClassName(BuildContext context, String? subclass) {
-  if (subclass == null) return '';
-  final key = 'drug.${subclass.split('/').first}';
-  final translated = context.tr(key);
-  return translated == key ? subclass.split('/').first.toLowerCase() : translated;
-}
 
 // ==========================================
 // PIECES
@@ -854,14 +851,14 @@ class _CountList extends StatelessWidget {
 class _IsolateTable extends StatelessWidget {
   final List<dynamic> isolates;
   final Set<String> importing;
-  final Map<String, String> runIds;
+  final Map<String, dynamic> runs;
   final ValueChanged<String> onAnalyse;
   final ValueChanged<String> onOpenRun;
 
   const _IsolateTable({
     required this.isolates,
     required this.importing,
-    required this.runIds,
+    required this.runs,
     required this.onAnalyse,
     required this.onOpenRun,
   });
@@ -876,6 +873,8 @@ class _IsolateTable extends StatelessWidget {
       Col(context.tr('surv.colSource'), flex: 2),
       Col(context.tr('surv.colCarba'), flex: 3),
       Col(context.tr('surv.colGenes'), width: 70, alignRight: true),
+      // ST у даних NCBI не заповнено; його дає наш MLST після «Аналізувати».
+      Col('ST', width: 70, alignRight: true),
       const Col('', width: 120),
     ];
 
@@ -889,7 +888,9 @@ class _IsolateTable extends StatelessWidget {
             Builder(
               builder: (context) {
                 final String? assembly = i['assemblyAccession'];
-                final runId = i['runId'] ?? (assembly == null ? null : runIds[assembly]);
+                final run = assembly == null ? null : runs[assembly];
+                final runId = run?['id'] ?? i['runId'];
+                final String? st = run?['mlstSequenceType'];
                 return TableRowItem(
                   columns: columns,
                   cells: [
@@ -905,6 +906,11 @@ class _IsolateTable extends StatelessWidget {
                       children: [for (final g in List<dynamic>.from(i['carbapenemases'])) MutationToken(g, highlight: true)],
                     ),
                     Text('${i['amrGeneCount']}', style: TextStyle(fontSize: 12.5, color: p.muted, fontFeatures: const [FontFeature.tabularFigures()])),
+                    Text(
+                      isSequenceType(st) ? 'ST$st' : '',
+                      textAlign: TextAlign.right,
+                      style: mono(context, size: 12, color: p.text),
+                    ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: runId != null

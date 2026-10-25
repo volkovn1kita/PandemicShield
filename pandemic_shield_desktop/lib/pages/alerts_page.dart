@@ -57,6 +57,7 @@ class _AlertsPageState extends State<AlertsPage> {
                 ('all', '${context.tr('common.all')}  ${all.length}'),
                 ('nextclade', '${context.tr('source.nextclade')}  ${count('nextclade')}'),
                 ('amrfinder', '${context.tr('source.amrfinder')}  ${count('amrfinder')}'),
+                ('mlst', '${context.tr('source.mlst')}  ${count('mlst')}'),
                 ('orf-motif', '${context.tr('source.orf')}  ${count('orf-motif')}'),
               ],
               value: _source,
@@ -75,13 +76,17 @@ class _AlertsPageState extends State<AlertsPage> {
                 final alert = alerts[i];
                 final String source = alert['source'];
                 final bool fromNextclade = source == 'nextclade';
-                final String position = fromNextclade
+                // MLST описує весь геном (сім генів одразу), тож позиції в нього немає.
+                final String position = source == 'mlst'
+                    ? ''
+                    : fromNextclade
                     ? ((alert['ntStart'] ?? 0) > 0 ? 'ref ${alert['ntStart']}' : '')
                     : '${alert['ntStart']}–${alert['ntEnd']} ${alert['strand']}';
                 final String variant = source == 'orf-motif' ? '' : shortVariant(alert['variant']);
                 final (sourceKey, positionHint) = switch (source) {
                   'nextclade' => ('source.nextclade', 'alerts.refHint'),
                   'amrfinder' => ('source.amrfinder', 'alerts.contigHint'),
+                  'mlst' => ('source.mlst', 'alerts.mlstHint'),
                   _ => ('source.orf', 'alerts.recordHint'),
                 };
 

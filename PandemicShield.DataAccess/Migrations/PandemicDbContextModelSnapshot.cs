@@ -139,6 +139,28 @@ namespace PandemicShield.DataAccess.Migrations
                     b.Property<string>("Message")
                         .HasColumnType("text");
 
+                    b.Property<string>("MlstAlleles")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("MlstCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MlstMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MlstScheme")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MlstSequenceType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MlstStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MlstVersion")
+                        .HasColumnType("text");
+
                     b.Property<DateTime?>("NextcladeCompletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -174,6 +196,8 @@ namespace PandemicShield.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ImportId");
+
+                    b.HasIndex("MlstSequenceType");
 
                     b.ToTable("Runs");
                 });

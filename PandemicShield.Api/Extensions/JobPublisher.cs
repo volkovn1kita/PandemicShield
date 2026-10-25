@@ -10,6 +10,7 @@ namespace PandemicShield.Api.Extensions
     {
         public const string NextcladeQueue = "nextclade_jobs";
         public const string AmrFinderQueue = "amrfinder_jobs";
+        public const string MlstQueue = "mlst_jobs";
         public const string ImportQueue = "import_jobs";
         public const string SurveillanceQueue = "surveillance_jobs";
 
