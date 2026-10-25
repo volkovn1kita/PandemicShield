@@ -42,7 +42,10 @@
             DataDir = Environment.GetEnvironmentVariable("DATA_DIR") ?? "data"
         };
 
-        public bool IsKnownDataset(string dataset) => Datasets.Contains(dataset, StringComparer.Ordinal);
+        /// <summary>Автовибір: набір для кожної послідовності визначає <c>nextclade sort</c> (див. воркер Nextclade).</summary>
+        public const string AutoDataset = "auto";
+
+        public bool IsKnownDataset(string dataset) => dataset == AutoDataset || Datasets.Contains(dataset, StringComparer.Ordinal);
 
         public bool IsKnownOrganism(string organism) => Organisms.Contains(organism, StringComparer.Ordinal);
 

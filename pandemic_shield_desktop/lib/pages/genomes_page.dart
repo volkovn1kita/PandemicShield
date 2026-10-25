@@ -104,7 +104,7 @@ class _GenomesPageState extends State<GenomesPage> {
   Future<void> _rerun() async {
     final run = _run;
     if (run == null) return;
-    String? dataset = run['nextcladeDataset'] ?? widget.store.datasets.where((d) => d.contains('sars-cov-2')).firstOrNull;
+    String? dataset = run['nextcladeDataset'] ?? autoDataset;
 
     final chosen = await showDialog<String>(
       context: context,
@@ -205,7 +205,7 @@ class _GenomesPageState extends State<GenomesPage> {
                       _DetailPanel(
                         key: ValueKey(selected['id']),
                         seq: selected,
-                        dataset: run['nextcladeDataset'],
+                        dataset: selected['dataset'],
                         alerts: _alerts.where((a) => a['sequenceResultId'] == selected['id']).toList(),
                         onClose: () => setState(() => _selectedSequenceId = null),
                       ),
@@ -234,8 +234,18 @@ class _GenomesPageState extends State<GenomesPage> {
       return EmptyHint(context.tr('genomes.empty'));
     }
 
-    final bool sarsCov2 = (run['nextcladeDataset'] as String?)?.contains('sars-cov-2') ?? false;
+    final bool auto = run['nextcladeDataset'] == autoDataset;
     final analysed = _sequences.where((s) => s['errors'] == null).length;
+    // Автовибір: у запуску можуть бути різні віруси — показуємо, скільки геномів потрапило в кожен набір.
+    final datasets = <String, int>{};
+    for (final s in _sequences) {
+      datasets.update(s['dataset'] as String, (n) => n + 1, ifAbsent: () => 1);
+    }
+    final datasetSummary = auto
+        ? datasets.entries
+              .map((e) => '${e.key == autoDataset ? context.tr('dataset.unknown') : datasetName(e.key)} ${e.value}')
+              .join(', ')
+        : datasetName(run['nextcladeDataset']);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -245,6 +255,7 @@ class _GenomesPageState extends State<GenomesPage> {
         final columns = [
           Col(context.tr('col.genome'), flex: 3),
           Col(context.tr('col.clade'), flex: 2),
+          if (auto && medium) Col(context.tr('col.dataset'), width: 130),
           if (medium) Col(context.tr('col.lineage'), width: 110),
           if (full) Col(context.tr('col.qc'), width: 100),
           if (full) Col(context.tr('col.coverage'), width: 80, alignRight: true),
@@ -261,7 +272,7 @@ class _GenomesPageState extends State<GenomesPage> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
               child: Text(
                 [
-                  datasetName(run['nextcladeDataset']),
+                  datasetSummary,
                   context.tr('genomes.summary', {'ok': analysed, 'n': _sequences.length}),
                   '${_alerts.length} ${context.tr('nav.alerts').toLowerCase()}',
                 ].join('  ·  '),
@@ -278,6 +289,7 @@ class _GenomesPageState extends State<GenomesPage> {
                   final alerts = _alerts.where((a) => a['sequenceResultId'] == seq['id']).toList();
                   final marks = _marks[seq['id']];
                   final coverage = (seq['coverage'] as num?)?.toDouble();
+                  final bool sarsCov2 = (seq['dataset'] as String).contains('sars-cov-2');
                   final substitutions = List<int>.from(marks?['substitutions'] ?? const []);
                   final deletions = [for (final d in (marks?['deletions'] ?? const [])) GenomeMarker(d[0], d[1])];
                   final length = sarsCov2
@@ -308,6 +320,12 @@ class _GenomesPageState extends State<GenomesPage> {
                               ),
                             )
                           : CladeLabel(clade: seq['clade'], display: seq['cladeDisplay']),
+                      if (auto && medium)
+                        Text(
+                          seq['dataset'] == autoDataset ? '—' : datasetName(seq['dataset']),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12.5, color: context.p.muted),
+                        ),
                       if (medium) Text(seq['lineage'] ?? '', overflow: TextOverflow.ellipsis, style: mono(context, size: 12.5)),
                       if (full) QcLabel(status: failed ? null : seq['qcStatus']),
                       if (full)

@@ -71,6 +71,26 @@ namespace PandemicShield.Nextclade
             return new StoreSummary(total, failed, mutationCount, alertCount);
         }
 
+        /// <summary>
+        /// Послідовності, для яких <c>nextclade sort</c> не знайшов жодного встановленого набору даних
+        /// (інший вірус, бактерія, сміття), зберігаються як непроаналізовані з поясненням.
+        /// </summary>
+        public static async Task SaveUnassignedAsync(Guid runId, IEnumerable<string> seqNames, string error,
+            Func<PandemicDbContext> createContext, CancellationToken cancellationToken = default)
+        {
+            foreach (var batch in seqNames.Chunk(BatchSize))
+            {
+                using var db = createContext();
+                foreach (string name in batch)
+                {
+                    var entity = new SequenceResultEntity(runId, name, NextcladeRunner.AutoDataset, null);
+                    entity.SetErrors(error);
+                    db.SequenceResults.Add(entity);
+                }
+                await db.SaveChangesAsync(cancellationToken);
+            }
+        }
+
         private static ThreatAlertEntity ToAlert(Guid runId, Guid sequenceResultId, VariantMatch match)
         {
             Mutation? m = match.Mutation;

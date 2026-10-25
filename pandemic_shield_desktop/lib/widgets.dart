@@ -378,7 +378,13 @@ const Map<String, String> _datasetNames = {
   'nextstrain/mpox/all-clades': 'Mpox',
 };
 
+/// Автовибір набору: для кожної послідовності його визначає `nextclade sort` (віруси різних видів в одному файлі).
+const String autoDataset = 'auto';
+
 String datasetName(String? dataset) => dataset == null ? '—' : (_datasetNames[dataset] ?? dataset);
+
+/// Назва набору з урахуванням автовибору («Автоматично» / «Auto»).
+String datasetLabel(BuildContext context, String? dataset) => dataset == autoDataset ? context.tr('dataset.auto') : datasetName(dataset);
 
 class DatasetDropdown extends StatelessWidget {
   final List<String> datasets;
@@ -386,7 +392,17 @@ class DatasetDropdown extends StatelessWidget {
   final String nullLabel;
   final ValueChanged<String?> onChanged;
 
-  const DatasetDropdown({super.key, required this.datasets, required this.value, required this.nullLabel, required this.onChanged});
+  /// Показувати варіант «Визначити автоматично» першим.
+  final bool allowAuto;
+
+  const DatasetDropdown({
+    super.key,
+    required this.datasets,
+    required this.value,
+    required this.nullLabel,
+    required this.onChanged,
+    this.allowAuto = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -401,6 +417,8 @@ class DatasetDropdown extends StatelessWidget {
       icon: Icon(Icons.unfold_more, size: 16, color: p.muted),
       style: TextStyle(fontSize: 13, color: p.text, fontFamily: sansFont),
       items: [
+        if (allowAuto)
+          DropdownMenuItem<String?>(value: autoDataset, child: Text(context.tr('dataset.autoOption'), overflow: TextOverflow.ellipsis)),
         DropdownMenuItem<String?>(value: null, child: Text(nullLabel, overflow: TextOverflow.ellipsis)),
         ...datasets.map(
           (d) => DropdownMenuItem<String?>(

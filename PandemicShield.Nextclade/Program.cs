@@ -5,6 +5,7 @@ using PandemicShield.DataAccess.Data;
 using PandemicShield.DataAccess.Entities;
 using PandemicShield.Nextclade.Results;
 using PandemicShield.Nextclade.Rules;
+using PandemicShield.Nextclade.Sorting;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
@@ -65,17 +66,14 @@ namespace PandemicShield.Nextclade
             {
                 List<VariantRule> rules = await LoadRulesAsync();
                 string outputDir = Path.Combine(Path.GetDirectoryName(job.FilePath)!, "nextclade");
-                string ndjson = await runner.RunAsync(job.FilePath, job.Dataset, outputDir);
 
-                StoreSummary summary;
-                using (var reader = new StreamReader(ndjson))
-                {
-                    summary = await NextcladeResultStore.SaveAsync(job.RunId, job.Dataset, runner.DatasetTag(job.Dataset),
-                        NextcladeNdjsonReader.Read(reader), rules, () => new PandemicDbContext());
-                }
+                var (summary, breakdown) = job.Dataset == NextcladeRunner.AutoDataset
+                    ? await RunSortedAsync(job, runner, rules, outputDir)
+                    : (await RunDatasetAsync(job.RunId, job.FilePath, job.Dataset, runner, rules, outputDir), null);
 
                 string message = $"Послідовностей: {summary.Sequences} (з помилкою: {summary.Failed}), " +
-                                 $"мутацій: {summary.Mutations}, сповіщень: {summary.Alerts}";
+                                 $"мутацій: {summary.Mutations}, сповіщень: {summary.Alerts}" +
+                                 (breakdown == null ? "" : $". Набори: {breakdown}");
                 await UpdateRunAsync(job.RunId, run => run.MarkNextcladeCompleted(summary.Sequences, message));
                 Console.WriteLine($"Запуск {job.RunId}: {message}");
             }
@@ -84,6 +82,68 @@ namespace PandemicShield.Nextclade
                 Console.WriteLine($"Запуск {job.RunId}: помилка Nextclade: {ex.Message}");
                 await UpdateRunAsync(job.RunId, run => run.MarkNextcladeFailed(ex.Message));
             }
+        }
+
+        private static async Task<StoreSummary> RunDatasetAsync(Guid runId, string fastaPath, string dataset, NextcladeRunner runner,
+            IReadOnlyList<VariantRule> rules, string outputDir)
+        {
+            string ndjson = await runner.RunAsync(fastaPath, dataset, outputDir);
+            using var reader = new StreamReader(ndjson);
+            return await NextcladeResultStore.SaveAsync(runId, dataset, runner.DatasetTag(dataset),
+                NextcladeNdjsonReader.Read(reader), rules, () => new PandemicDbContext());
+        }
+
+        /// <summary>
+        /// Автовибір: <c>nextclade sort</c> визначає набір для кожної послідовності, файл розкладається по наборах,
+        /// і Nextclade проганяється для кожного окремо (SARS-CoV-2 і грип з одного файлу — у своїх наборах).
+        /// </summary>
+        private static async Task<(StoreSummary Summary, string Breakdown)> RunSortedAsync(NextcladeJobMessage job, NextcladeRunner runner,
+            IReadOnlyList<VariantRule> rules, string outputDir)
+        {
+            if (Directory.Exists(outputDir)) Directory.Delete(outputDir, recursive: true);
+            string sortTsv = await runner.SortAsync(job.FilePath, outputDir);
+
+            Dictionary<int, SortMatch> assignment;
+            using (var reader = new StreamReader(sortTsv))
+                assignment = DatasetSorter.Assign(DatasetSorter.Read(reader), runner.InstalledDatasets());
+
+            var files = new Dictionary<string, string>(StringComparer.Ordinal);
+            var writers = new List<StreamWriter>();
+            FastaSplitter.SplitResult split;
+            using (var input = new StreamReader(job.FilePath))
+            {
+                split = FastaSplitter.Split(input, assignment, dataset =>
+                {
+                    string path = Path.Combine(outputDir, "sorted", $"{files.Count}.fasta");
+                    Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                    files[dataset] = path;
+                    var writer = new StreamWriter(path);
+                    writers.Add(writer);
+                    return writer;
+                });
+            }
+            foreach (var writer in writers) writer.Dispose();
+
+            int sequences = 0, failed = 0, mutations = 0, alerts = 0;
+            foreach (var (dataset, path) in files)
+            {
+                var part = await RunDatasetAsync(job.RunId, path, dataset, runner, rules, Path.Combine(outputDir, $"run-{Path.GetFileNameWithoutExtension(path)}"));
+                sequences += part.Sequences;
+                failed += part.Failed;
+                mutations += part.Mutations;
+                alerts += part.Alerts;
+            }
+
+            if (split.Unassigned.Count > 0)
+            {
+                await NextcladeResultStore.SaveUnassignedAsync(job.RunId, split.Unassigned,
+                    "Не вдалося визначити вірус: послідовність не схожа на жоден встановлений набір даних Nextclade.",
+                    () => new PandemicDbContext());
+            }
+
+            string breakdown = string.Join(", ", split.RecordsPerDataset.OrderByDescending(p => p.Value).Select(p => $"{p.Key} — {p.Value}"));
+            if (split.Unassigned.Count > 0) breakdown += $", не визначено — {split.Unassigned.Count}";
+            return (new StoreSummary(sequences + split.Unassigned.Count, failed + split.Unassigned.Count, mutations, alerts), breakdown);
         }
 
         private static async Task<List<VariantRule>> LoadRulesAsync()

@@ -338,6 +338,8 @@ class _NewRuleDialogState extends State<_NewRuleDialog> {
                     datasets: widget.store.datasets,
                     value: _dataset,
                     nullLabel: context.tr('common.anyDataset'),
+                    // Правило прив'язується до конкретного набору або до будь-якого; «автоматично» — це спосіб запуску.
+                    allowAuto: false,
                     onChanged: (v) => setState(() => _dataset = v),
                   ),
                 ),

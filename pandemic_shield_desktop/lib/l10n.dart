@@ -273,6 +273,11 @@ const Map<String, Map<AppLanguage, String>> _strings = {
   'import.failedSome': {_uk: 'з помилкою: {n}', _en: 'failed: {n}'},
 
   // Нагляд за резистентністю (NCBI Pathogen Detection)
+  // Автовибір набору даних (nextclade sort)
+  'dataset.auto': {_uk: 'Автоматично', _en: 'Auto'},
+  'dataset.autoOption': {_uk: 'Визначити автоматично (nextclade sort)', _en: 'Detect automatically (nextclade sort)'},
+  'dataset.unknown': {_uk: 'не визначено', _en: 'unknown'},
+
   // Звіт по зразку
   'report.button': {_uk: 'Звіт', _en: 'Report'},
   'report.pdf': {_uk: 'PDF для передачі', _en: 'PDF to share'},

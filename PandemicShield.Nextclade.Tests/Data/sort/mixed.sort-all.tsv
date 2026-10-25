@@ -1,0 +1,11 @@
+index	seqName	dataset	score	numHits
+2	A/Hawaii/54/2026	nextstrain/flu/h3n2/ha/EPI1857216	0.7524985302763081	80
+3	A/Ohio/46/2026	nextstrain/flu/h3n2/ha/EPI1857216	0.7242798353909465	77
+5	junk			
+4	PP_001AG2T	nextstrain/rsv/a/EPI_ISL_412866	0.7678584937693415	43
+1	USA/CA-LACPHL-AY03266/2023	nextstrain/sars-cov-2/BA.2.86	0.9122595146306303	1689
+1	USA/CA-LACPHL-AY03266/2023	nextstrain/sars-cov-2/wuhan-hu-1/orfs	0.9063182152458245	1678
+1	USA/CA-LACPHL-AY03266/2023	nextstrain/sars-cov-2/wuhan-hu-1/proteins	0.9063182152458245	1678
+0	OY754687	nextstrain/sars-cov-2/BA.2.86	0.9466969447100196	1765
+0	OY754687	nextstrain/sars-cov-2/wuhan-hu-1/orfs	0.9407968504370393	1754
+0	OY754687	nextstrain/sars-cov-2/wuhan-hu-1/proteins	0.9407968504370393	1754

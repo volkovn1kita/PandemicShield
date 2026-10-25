@@ -90,7 +90,7 @@ class RunsPage extends StatelessWidget {
                       bacterial
                           ? // ST спершу: назва виду довга й обрізається, а тип штаму — головна відмінність між ізолятами.
                             [if (isSequenceType(run['mlstSequenceType'])) 'ST${run['mlstSequenceType']}', organismName(run['amrOrganism'])].join(' · ')
-                          : datasetName(run['nextcladeDataset']),
+                          : datasetLabel(context, run['nextcladeDataset']),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
@@ -143,7 +143,8 @@ class NewAnalysisDialog extends StatefulWidget {
 
 class _NewAnalysisDialogState extends State<NewAnalysisDialog> {
   int _category = 0;
-  late String? _dataset = widget.store.datasets.where((d) => d.contains('sars-cov-2')).firstOrNull;
+  // За замовчуванням — автовибір: користувачу не треба знати, який вірус у файлі.
+  String? _dataset = autoDataset;
   String? _organism;
   PlatformFile? _file;
   bool _uploading = false;

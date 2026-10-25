@@ -27,6 +27,8 @@ COPY --from=nextclade /usr/bin/nextclade /usr/bin/nextclade
 RUN for dataset in $NEXTCLADE_DATASETS; do \
         nextclade dataset get --name "$dataset" --output-dir "/datasets/$dataset" || exit 1; \
     done
+# Індекс мінімізаторів для автовибору набору (nextclade sort): без нього sort щоразу ходив би в інтернет.
+ADD https://data.clades.nextstrain.org/v3/minimizer_index.json /datasets/minimizer_index.json
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
 WORKDIR /app
@@ -34,5 +36,6 @@ COPY --from=nextclade /usr/bin/nextclade /usr/bin/nextclade
 COPY --from=datasets /datasets /datasets
 ENV NEXTCLADE_BIN=/usr/bin/nextclade
 ENV NEXTCLADE_DATASETS_DIR=/datasets
+ENV NEXTCLADE_MINIMIZER_INDEX=/datasets/minimizer_index.json
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "PandemicShield.Nextclade.dll"]

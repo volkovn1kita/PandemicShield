@@ -24,7 +24,7 @@ class NcbiImportDialog extends StatefulWidget {
 class _NcbiImportDialogState extends State<NcbiImportDialog> {
   final _accessions = TextEditingController();
   int _category = 0;
-  late String? _dataset = widget.store.datasets.where((d) => d.contains('sars-cov-2')).firstOrNull;
+  String? _dataset = autoDataset;
   String? _organism;
   int _source = 0;
   PlatformFile? _archive;

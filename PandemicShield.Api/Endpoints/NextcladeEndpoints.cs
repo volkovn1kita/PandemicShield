@@ -90,7 +90,8 @@ namespace PandemicShield.Api.Endpoints
                 string? dataset = string.IsNullOrWhiteSpace(request.Dataset) ? null : request.Dataset.Trim();
                 if (dataset != null && (pattern.IsAmr || pattern.IsMlst))
                     return Results.BadRequest("Правила для бактерій (gene:, class:, subclass:, st:) не прив'язуються до набору даних Nextclade.");
-                if (dataset != null && !nextclade.IsKnownDataset(dataset))
+                // «auto» — спосіб запуску, а не набір: правило прив'язується до конкретного набору або до будь-якого (null).
+                if (dataset != null && (dataset == AnalysisOptions.AutoDataset || !nextclade.IsKnownDataset(dataset)))
                     return Results.BadRequest($"Невідомий набір даних Nextclade: {dataset}");
 
                 // Зберігаємо канонічне позначення: "s:d614g" → "S:D614G".
