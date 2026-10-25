@@ -7,6 +7,7 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'amr_view.dart' show OrganismDropdown, organismName;
+import 'import_dialog.dart';
 
 // ==========================================
 // RUNS
@@ -38,6 +39,14 @@ class RunsPage extends StatelessWidget {
         TopBar(
           title: Text(context.tr('nav.runs')),
           actions: [
+            OutlinedButton.icon(
+              onPressed: () => showDialog(
+                context: context,
+                builder: (_) => NcbiImportDialog(store: store),
+              ),
+              icon: const Icon(Icons.cloud_download_outlined, size: 15),
+              label: Text(context.tr('import.button')),
+            ),
             FilledButton.icon(
               onPressed: () => showDialog(
                 context: context,
@@ -48,6 +57,7 @@ class RunsPage extends StatelessWidget {
             ),
           ],
         ),
+        ImportsStrip(store: store),
         if (store.runs.isEmpty)
           Expanded(child: EmptyHint(context.tr('runs.empty')))
         else ...[

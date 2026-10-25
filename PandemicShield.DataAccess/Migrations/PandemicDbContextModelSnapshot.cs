@@ -130,6 +130,9 @@ namespace PandemicShield.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ImportId")
+                        .HasColumnType("uuid");
+
                     b.Property<long>("InvalidSymbolCount")
                         .HasColumnType("bigint");
 
@@ -155,6 +158,9 @@ namespace PandemicShield.DataAccess.Migrations
                     b.Property<int>("SequencesAnalyzed")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SourceAccession")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -167,7 +173,62 @@ namespace PandemicShield.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ImportId");
+
                     b.ToTable("Runs");
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.ImportBatchEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Accessions")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AmrOrganism")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ArchiveName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Done")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("FailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NextcladeDataset")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Total")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Imports");
                 });
 
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.MutationEntity", b =>
@@ -405,6 +466,14 @@ namespace PandemicShield.DataAccess.Migrations
                         .HasForeignKey("RunId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("PandemicShield.DataAccess.Entities.AnalysisRunEntity", b =>
+                {
+                    b.HasOne("PandemicShield.DataAccess.Entities.ImportBatchEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ImportId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("PandemicShield.DataAccess.Entities.MutationEntity", b =>

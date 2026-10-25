@@ -230,4 +230,43 @@ const Map<String, Map<AppLanguage, String>> _strings = {
   'rules.kind.amrGene': {_uk: 'Ген резистентності {name}', _en: 'Resistance gene {name}'},
   'rules.kind.amrClass': {_uk: 'Клас антибіотиків {name}', _en: 'Antibiotic class {name}'},
   'rules.kind.amrSubclass': {_uk: 'Стійкість до {name}', _en: 'Resistance to {name}'},
+
+  // Імпорт відкритих даних NCBI
+  'import.button': {_uk: 'Імпорт з NCBI', _en: 'Import from NCBI'},
+  'import.title': {_uk: 'Імпорт відкритих даних NCBI', _en: 'Import open NCBI data'},
+  'import.source': {_uk: 'Джерело', _en: 'Source'},
+  'import.accessions': {_uk: 'Номери', _en: 'Accessions'},
+  'import.archive': {_uk: 'Архів NCBI Datasets', _en: 'NCBI Datasets archive'},
+  'import.accessionsLabel': {_uk: 'Номери NCBI (до 500)', _en: 'NCBI accessions (up to 500)'},
+  'import.hintVirus': {
+    _uk: 'Номери послідовностей GenBank через пробіл або з нового рядка. Усі геноми стануть одним запуском, як файл з кількома записами.',
+    _en: 'GenBank sequence accessions separated by spaces or new lines. All genomes become one run, like a multi-record file.',
+  },
+  'import.hintBacteria': {
+    _uk: 'Номери збірок (GCA_…, GCF_…) або повних хромосом (CP…). Кожна збірка стане окремим запуском: це окремий ізолят.',
+    _en: 'Assembly accessions (GCA_…, GCF_…) or complete chromosomes (CP…). Each assembly becomes its own run: it is a separate isolate.',
+  },
+  'import.archiveLabel': {_uk: 'ZIP-архів', _en: 'ZIP archive'},
+  'import.archiveHint': {
+    _uk: 'Кнопка Download на NCBI Virus чи NCBI Datasets (Genome, формат FASTA) або команда datasets download.',
+    _en: 'The Download button on NCBI Virus or NCBI Datasets (Genome, FASTA) or the datasets download command.',
+  },
+  'import.pickArchive': {_uk: 'Обрати архів…', _en: 'Choose archive…'},
+  'import.organismAuto': {_uk: 'Визначити за даними NCBI', _en: 'Detect from NCBI metadata'},
+  'import.organismHint': {
+    _uk: 'Вид кожної збірки береться з метаданих NCBI, якщо AMRFinderPlus його знає.',
+    _en: 'The species of each assembly is taken from NCBI metadata if AMRFinderPlus supports it.',
+  },
+  'import.start': {_uk: 'Імпортувати', _en: 'Import'},
+  'import.started': {
+    _uk: 'Імпорт поставлено в чергу. Прогрес показано над таблицею запусків.',
+    _en: 'Import queued. Progress is shown above the runs table.',
+  },
+  'import.row': {_uk: 'Імпорт NCBI', _en: 'NCBI import'},
+  'import.status.0': {_uk: 'У черзі', _en: 'Queued'},
+  'import.status.1': {_uk: 'Завантажується', _en: 'Downloading'},
+  'import.status.2': {_uk: 'Готово', _en: 'Done'},
+  'import.status.3': {_uk: 'Помилка', _en: 'Failed'},
+  'import.progress': {_uk: '{done} з {total}', _en: '{done} of {total}'},
+  'import.failedSome': {_uk: 'з помилкою: {n}', _en: 'failed: {n}'},
 };

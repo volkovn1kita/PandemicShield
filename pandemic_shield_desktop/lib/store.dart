@@ -11,6 +11,7 @@ class AppStore extends ChangeNotifier {
   List<dynamic> alerts = [];
   List<dynamic> variantRules = [];
   List<dynamic> motifs = [];
+  List<dynamic> imports = [];
   List<String> datasets = [];
   List<String> organisms = [];
   bool online = false;
@@ -29,6 +30,7 @@ class AppStore extends ChangeNotifier {
         Api.list('/threats'),
         Api.list('/variant-markers'),
         Api.list('/dictionary'),
+        Api.list('/imports'),
         if (datasets.isEmpty) Api.list('/nextclade/datasets'),
         if (organisms.isEmpty) Api.list('/amr/organisms'),
       ]);
@@ -36,7 +38,8 @@ class AppStore extends ChangeNotifier {
       alerts = results[1];
       variantRules = results[2];
       motifs = results[3];
-      int next = 4;
+      imports = results[4];
+      int next = 5;
       if (datasets.isEmpty) datasets = List<String>.from(results[next++]);
       if (organisms.isEmpty) organisms = List<String>.from(results[next++]);
       online = true;

@@ -49,13 +49,21 @@ namespace PandemicShield.DataAccess.Entities
         public string? AmrMessage { get; private set; }
         public DateTime? AmrCompletedAt { get; private set; }
 
-        public AnalysisRunEntity(string fileName, ThreatCategory category)
+        /// <summary>Пакет імпорту NCBI, з якого прийшов цей запуск (null — файл завантажено вручну).</summary>
+        public Guid? ImportId { get; private set; }
+
+        /// <summary>Номер у NCBI (збірка GCA_… або послідовність), якщо запуск — це один імпортований зразок.</summary>
+        public string? SourceAccession { get; private set; }
+
+        public AnalysisRunEntity(string fileName, ThreatCategory category, Guid? importId = null, string? sourceAccession = null)
         {
             Id = Guid.NewGuid();
             FileName = fileName;
             Category = category;
             Status = AnalysisRunStatus.Streaming;
             StartedAt = DateTime.UtcNow;
+            ImportId = importId;
+            SourceAccession = sourceAccession;
         }
 
         public void MarkStreamed(int recordCount, long baseCount, long invalidSymbolCount, int chunkCount, string message)

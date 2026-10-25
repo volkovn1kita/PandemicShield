@@ -7,6 +7,7 @@ using Google.Protobuf;
 using Microsoft.AspNetCore.Mvc;
 using PandemicShield.Api.Endpoints;
 using PandemicShield.Api.Extensions;
+using PandemicShield.Api.Imports;
 using Microsoft.AspNetCore.Http.Features;
 
 namespace PandemicShield.Api
@@ -23,6 +24,11 @@ namespace PandemicShield.Api
 
             builder.Services.AddSingleton(AnalysisOptions.FromEnvironment());
             builder.Services.AddSingleton<JobPublisher>();
+            builder.Services.AddScoped<AnalysisSubmitter>();
+
+            // Імпорт відкритих даних NCBI: завантаження у фоні, щоб запит не чекав на сотні збірок.
+            builder.Services.AddHttpClient<NcbiClient>(client => client.Timeout = TimeSpan.FromMinutes(10));
+            builder.Services.AddHostedService<ImportWorker>();
 
             var parserUrl = builder.Configuration["ParserUrl"] ?? "https://localhost:56627";
 
@@ -61,6 +67,7 @@ namespace PandemicShield.Api
             app.MapAnalysisEndpoints();
             app.MapNextcladeEndpoints();
             app.MapAmrEndpoints();
+            app.MapImportEndpoints();
 
             app.Run();
         }

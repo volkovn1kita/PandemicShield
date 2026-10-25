@@ -511,7 +511,10 @@ class OrganismDropdown extends StatelessWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
 
-  const OrganismDropdown({super.key, required this.organisms, required this.value, required this.onChanged});
+  /// Підпис варіанта «без виду»; за замовчуванням — «Не вказано (лише гени)».
+  final String? nullLabel;
+
+  const OrganismDropdown({super.key, required this.organisms, required this.value, required this.onChanged, this.nullLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -526,7 +529,7 @@ class OrganismDropdown extends StatelessWidget {
       icon: Icon(Icons.unfold_more, size: 16, color: p.muted),
       style: TextStyle(fontSize: 13, color: p.text, fontFamily: sansFont),
       items: [
-        DropdownMenuItem<String?>(value: null, child: Text(context.tr('upload.organismNone'))),
+        DropdownMenuItem<String?>(value: null, child: Text(nullLabel ?? context.tr('upload.organismNone'))),
         ...organisms.map(
           (o) => DropdownMenuItem<String?>(
             value: o,

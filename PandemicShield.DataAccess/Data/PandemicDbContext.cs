@@ -12,6 +12,7 @@ namespace PandemicShield.DataAccess.Data
         public DbSet<MutationEntity> Mutations { get; set; }
         public DbSet<VariantMarkerEntity> VariantMarkers { get; set; }
         public DbSet<AmrHitEntity> AmrHits { get; set; }
+        public DbSet<ImportBatchEntity> Imports { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,6 +28,16 @@ namespace PandemicShield.DataAccess.Data
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.Status).HasConversion<string>();
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.NextcladeStatus).HasConversion<string>();
             modelBuilder.Entity<AnalysisRunEntity>().Property(e => e.AmrStatus).HasConversion<string>();
+            modelBuilder.Entity<AnalysisRunEntity>().HasIndex(e => e.ImportId);
+            // Видалення пакета імпорту не видаляє вже проаналізовані зразки.
+            modelBuilder.Entity<AnalysisRunEntity>()
+                .HasOne<ImportBatchEntity>()
+                .WithMany()
+                .HasForeignKey(e => e.ImportId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ImportBatchEntity>().Property(e => e.Category).HasConversion<string>();
+            modelBuilder.Entity<ImportBatchEntity>().Property(e => e.Status).HasConversion<string>();
 
             modelBuilder.Entity<AmrHitEntity>().HasIndex(e => e.RunId);
             modelBuilder.Entity<AmrHitEntity>().HasIndex(e => e.ElementSymbol);

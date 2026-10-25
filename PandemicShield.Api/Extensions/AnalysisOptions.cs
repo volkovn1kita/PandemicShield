@@ -48,6 +48,27 @@
 
         public string RunInputPath(Guid runId) => Path.GetFullPath(Path.Combine(DataDir, "runs", runId.ToString(), "input.fasta"));
 
+        /// <summary>Тимчасова тека імпорту NCBI (завантажені архіви й FASTA до того, як вони стануть запусками).</summary>
+        public string ImportDir(Guid importId) => Path.GetFullPath(Path.Combine(DataDir, "imports", importId.ToString()));
+
+        /// <summary>
+        /// Вид AMRFinderPlus за науковою назвою з NCBI: "Klebsiella pneumoniae subsp. pneumoniae HS11286" → Klebsiella_pneumoniae.
+        /// Обирається найдовший збіг, тож "Escherichia coli" стане Escherichia, а Klebsiella oxytoca — Klebsiella_oxytoca.
+        /// </summary>
+        public string? MatchOrganism(string? scientificName)
+        {
+            if (string.IsNullOrWhiteSpace(scientificName)) return null;
+            string name = scientificName.Trim();
+            // AMRFinderPlus аналізує Shigella разом з Escherichia (це одна група видів).
+            if (name.StartsWith("Shigella", StringComparison.OrdinalIgnoreCase) && IsKnownOrganism("Escherichia")) return "Escherichia";
+
+            return Organisms
+                .Where(o => name.StartsWith(o.Replace('_', ' '), StringComparison.OrdinalIgnoreCase) &&
+                            (name.Length == o.Length || name[o.Length] == ' '))
+                .OrderByDescending(o => o.Length)
+                .FirstOrDefault();
+        }
+
         private static string[]? List(string variable)
         {
             string? value = Environment.GetEnvironmentVariable(variable);

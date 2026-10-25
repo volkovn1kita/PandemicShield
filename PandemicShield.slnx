@@ -6,6 +6,7 @@
   <Project Path="PandemicShield.Aggregator/PandemicShield.Aggregator.csproj" Id="d41e6fbc-32a3-4668-9141-3a4ee5016136" />
   <Project Path="PandemicShield.AmrFinder.Tests/PandemicShield.AmrFinder.Tests.csproj" />
   <Project Path="PandemicShield.AmrFinder/PandemicShield.AmrFinder.csproj" />
+  <Project Path="PandemicShield.Api.Tests/PandemicShield.Api.Tests.csproj" />
   <Project Path="PandemicShield.Api/PandemicShield.Api.csproj" Id="4a80c82b-6823-4f8e-9fcb-d8424e749718" />
   <Project Path="PandemicShield.Bio.Tests/PandemicShield.Bio.Tests.csproj" />
   <Project Path="PandemicShield.Bio/PandemicShield.Bio.csproj" />

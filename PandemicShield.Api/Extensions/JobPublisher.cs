@@ -10,6 +10,7 @@ namespace PandemicShield.Api.Extensions
     {
         public const string NextcladeQueue = "nextclade_jobs";
         public const string AmrFinderQueue = "amrfinder_jobs";
+        public const string ImportQueue = "import_jobs";
 
         private readonly SemaphoreSlim _lock = new(1, 1);
         private readonly HashSet<string> _declared = new();
