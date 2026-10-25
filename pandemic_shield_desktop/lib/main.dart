@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n.dart';
 import 'pages/alerts_page.dart';
+import 'pages/explorer_page.dart';
 import 'pages/genomes_page.dart';
 import 'pages/rules_page.dart';
 import 'pages/runs_page.dart';
@@ -103,6 +104,7 @@ class _AppShellState extends State<AppShell> {
                   AlertsPage(store: widget.store, onOpenRun: _openRun),
                   RulesPage(store: widget.store),
                   SurveillancePage(store: widget.store, active: _page == 4, onOpenRun: _openRun),
+                  const ExplorerPage(),
                 ],
               ),
             ),
@@ -136,6 +138,8 @@ class _Sidebar extends StatelessWidget {
       (Icons.rule, 'nav.rules', store.variantRules.length + store.motifs.length),
       // Нагляд за даними NCBI: лічильника немає, це не список об'єктів, а зведення.
       (Icons.public, 'nav.surveillance', 0),
+      // Навчальний режим: файл відкривається в пам'яті, нічого не зберігається.
+      (Icons.science_outlined, 'nav.explorer', 0),
     ];
 
     return Container(

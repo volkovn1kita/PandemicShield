@@ -19,10 +19,10 @@ class Api {
 
   static Future<List<dynamic>> list(String path, [Map<String, String>? query]) async => (await get(path, query)) as List<dynamic>;
 
-  static Future<dynamic> post(String path, Object body) async {
+  static Future<dynamic> post(String path, Object body, {Duration? wait}) async {
     final response = await http
         .post(Uri.parse('$baseUrl$path'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(body))
-        .timeout(timeout);
+        .timeout(wait ?? timeout);
     _ensureSuccess(response);
     return response.body.isEmpty ? null : jsonDecode(utf8.decode(response.bodyBytes));
   }
@@ -70,6 +70,16 @@ class Api {
     if (nextcladeDataset != null) request.fields['nextcladeDataset'] = nextcladeDataset;
     if (amrOrganism != null) request.fields['amrOrganism'] = amrOrganism;
 
+    final response = await http.Response.fromStream(await request.send());
+    _ensureSuccess(response);
+    return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+  }
+
+  /// Explorer: відкрити файл FASTA/GenBank або вставлений текст; API тримає його в пам'яті під токеном.
+  static Future<Map<String, dynamic>> explorerOpen({String? filePath, String? text}) async {
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/explorer/files'));
+    if (filePath != null) request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    if (text != null) request.fields['text'] = text;
     final response = await http.Response.fromStream(await request.send());
     _ensureSuccess(response);
     return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;

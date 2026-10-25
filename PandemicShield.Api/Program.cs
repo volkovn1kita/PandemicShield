@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using PandemicShield.Api.Endpoints;
 using PandemicShield.Api.Extensions;
 using PandemicShield.Api.Events;
+using PandemicShield.Api.Explorer;
 using PandemicShield.Api.Imports;
 using PandemicShield.Contracts.Events;
 using Microsoft.AspNetCore.Http.Features;
@@ -36,6 +37,16 @@ namespace PandemicShield.Api
             // Імпорт відкритих даних NCBI: завантаження у фоні, щоб запит не чекав на сотні збірок.
             builder.Services.AddHttpClient<NcbiClient>(client => client.Timeout = TimeSpan.FromMinutes(10));
             builder.Services.AddHostedService<ImportWorker>();
+
+            // Explorer (навчальний режим): відкриті файли тримаються в пам'яті, 3D-структури шукаються в RCSB PDB / AlphaFold DB.
+            builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<ExplorerService>();
+            // AlphaFold DB відповідає 403 на запити без User-Agent.
+            builder.Services.AddHttpClient<StructureSearch>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(60);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("PandemicShield-Explorer/1.0");
+            });
 
             var parserUrl = builder.Configuration["ParserUrl"] ?? "https://localhost:56627";
 
@@ -80,6 +91,7 @@ namespace PandemicShield.Api
             app.MapImportEndpoints();
             app.MapSurveillanceEndpoints();
             app.MapReportEndpoints();
+            app.MapExplorerEndpoints();
 
             app.Run();
         }
