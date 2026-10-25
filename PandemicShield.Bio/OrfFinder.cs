@@ -75,6 +75,35 @@ namespace PandemicShield.Bio
         }
 
         /// <summary>
+        /// ORF кільцевої молекули (плазміда, геном бактерії): рамка може проходити через «нуль» — кінець послідовності
+        /// продовжується її початком. Пошук іде в потроєній послідовності з ядром у середній копії, тож кожен ORF
+        /// має повний контекст з обох боків і знаходиться рівно один раз.
+        /// <para>
+        /// Координати — на прямому ланцюзі записаної послідовності (0-based); для ORF, що проходить через «нуль»,
+        /// <see cref="Orf.End"/> більший за довжину послідовності (його кінець — <c>End - Length</c> на початку запису).
+        /// ORF, довші за саму молекулу, не повертаються.
+        /// </para>
+        /// </summary>
+        public static List<Orf> FindCircular(string recordId, string sequence, OrfFinderOptions? options = null)
+        {
+            int length = sequence.Length;
+            if (length == 0) return [];
+
+            var window = new SequenceWindow(recordId, 0, string.Concat(sequence, sequence, sequence), -length, 0, length, false, false);
+            var orfs = Find(window, (options ?? new OrfFinderOptions()) with { IncludePartial = false });
+
+            var result = new List<Orf>(orfs.Count);
+            foreach (var orf in orfs)
+            {
+                if (orf.Length > length) continue;
+                // Зворотний ORF зі стартом у ядрі може починатися на прямому ланцюзі ще в лівій копії: зсуваємо на один оберт.
+                result.Add(orf.Start < 0 ? orf with { Start = orf.Start + length, End = orf.End + length } : orf);
+            }
+            result.Sort((a, b) => a.Start != b.Start ? a.Start.CompareTo(b.Start) : a.Strand.CompareTo(b.Strand));
+            return result;
+        }
+
+        /// <summary>
         /// Шукає ORF у вікні й повертає ті, чий старт-кодон лежить у ядрі вікна.
         /// Якщо обробити всі вікна запису, кожен ORF буде знайдено рівно один раз
         /// (за умови, що він коротший за фланг вікна).
