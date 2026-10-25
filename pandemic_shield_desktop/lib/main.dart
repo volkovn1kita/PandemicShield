@@ -1,37 +1,52 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-import 'api.dart';
 import 'l10n.dart';
-import 'pages/motifs_page.dart';
-import 'pages/overview_page.dart';
+import 'pages/alerts_page.dart';
+import 'pages/genomes_page.dart';
 import 'pages/rules_page.dart';
-import 'pages/samples_page.dart';
+import 'pages/runs_page.dart';
+import 'store.dart';
 import 'theme.dart';
 
 void main() {
-  runApp(PandemicShieldApp(language: LanguageController()));
+  runApp(PandemicShieldApp(language: LanguageController(), store: AppStore()..start()));
 }
 
-class PandemicShieldApp extends StatelessWidget {
+class PandemicShieldApp extends StatefulWidget {
   final LanguageController language;
-  const PandemicShieldApp({super.key, required this.language});
+  final AppStore store;
+
+  const PandemicShieldApp({super.key, required this.language, required this.store});
+
+  @override
+  State<PandemicShieldApp> createState() => _PandemicShieldAppState();
+}
+
+class _PandemicShieldAppState extends State<PandemicShieldApp> {
+  bool _dark = false;
 
   @override
   Widget build(BuildContext context) {
     return L10n(
-      controller: language,
-      child: MaterialApp(title: 'PandemicShield', debugShowCheckedModeBanner: false, theme: buildTheme(), home: const AppShell()),
+      controller: widget.language,
+      child: MaterialApp(
+        title: 'PandemicShield',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(_dark ? Palette.dark : Palette.light),
+        home: AppShell(store: widget.store, onToggleTheme: () => setState(() => _dark = !_dark)),
+      ),
     );
   }
 }
 
 // ==========================================
-// SHELL: бічна панель + сторінки
+// SHELL
 // ==========================================
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  final AppStore store;
+  final VoidCallback onToggleTheme;
+
+  const AppShell({super.key, required this.store, required this.onToggleTheme});
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -40,32 +55,6 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _page = 0;
   String? _selectedRunId;
-  bool _online = false;
-  Timer? _healthTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkHealth();
-    _healthTimer = Timer.periodic(const Duration(seconds: 5), (_) => _checkHealth());
-  }
-
-  @override
-  void dispose() {
-    _healthTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _checkHealth() async {
-    bool online;
-    try {
-      await Api.get('/nextclade/datasets');
-      online = true;
-    } catch (_) {
-      online = false;
-    }
-    if (mounted && online != _online) setState(() => _online = online);
-  }
 
   void _openRun(String runId) => setState(() {
     _selectedRunId = runId;
@@ -74,22 +63,35 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          _Sidebar(page: _page, online: _online, onSelect: (page) => setState(() => _page = page)),
-          Expanded(
-            child: IndexedStack(
-              index: _page,
-              children: [
-                OverviewPage(active: _page == 0, onOpenRun: _openRun),
-                SamplesPage(active: _page == 1, selectedRunId: _selectedRunId, onSelectRun: (id) => setState(() => _selectedRunId = id)),
-                RulesPage(active: _page == 2),
-                MotifsPage(active: _page == 3),
-              ],
+    return ListenableBuilder(
+      listenable: widget.store,
+      builder: (context, _) => Scaffold(
+        body: Row(
+          children: [
+            _Sidebar(
+              page: _page,
+              store: widget.store,
+              onSelect: (page) => setState(() => _page = page),
+              onToggleTheme: widget.onToggleTheme,
             ),
-          ),
-        ],
+            Expanded(
+              child: IndexedStack(
+                index: _page,
+                children: [
+                  RunsPage(store: widget.store, onOpenRun: _openRun),
+                  GenomesPage(
+                    store: widget.store,
+                    active: _page == 1,
+                    selectedRunId: _selectedRunId ?? widget.store.runs.where((r) => r['nextcladeStatus'] == 3).firstOrNull?['id'],
+                    onSelectRun: (id) => setState(() => _selectedRunId = id),
+                  ),
+                  AlertsPage(store: widget.store, onOpenRun: _openRun),
+                  RulesPage(store: widget.store),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -97,86 +99,100 @@ class _AppShellState extends State<AppShell> {
 
 class _Sidebar extends StatelessWidget {
   final int page;
-  final bool online;
+  final AppStore store;
   final ValueChanged<int> onSelect;
+  final VoidCallback onToggleTheme;
 
-  const _Sidebar({required this.page, required this.online, required this.onSelect});
+  const _Sidebar({required this.page, required this.store, required this.onSelect, required this.onToggleTheme});
 
   @override
   Widget build(BuildContext context) {
+    final p = context.p;
+    final language = L10n.controllerOf(context);
     final items = [
-      (Icons.space_dashboard_outlined, 'nav.overview'),
-      (Icons.biotech_outlined, 'nav.samples'),
-      (Icons.rule, 'nav.rules'),
-      (Icons.dns_outlined, 'nav.motifs'),
+      (Icons.folder_outlined, 'nav.runs', store.runs.length),
+      (Icons.biotech_outlined, 'nav.genomes', store.runs.fold<int>(0, (n, r) => n + ((r['sequencesAnalyzed'] ?? 0) as int))),
+      (Icons.notifications_none, 'nav.alerts', store.alerts.length),
+      (Icons.rule, 'nav.rules', store.variantRules.length + store.motifs.length),
     ];
 
     return Container(
-      width: 236,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppColors.sidebar, Color(0xFF0E1A2B)]),
+      width: 224,
+      decoration: BoxDecoration(
+        color: p.sidebar,
+        border: Border(right: BorderSide(color: p.border)),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 18),
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(11),
-                  gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryBright]),
-                  boxShadow: [BoxShadow(color: AppColors.primaryBright.withValues(alpha: 0.35), blurRadius: 14)],
-                ),
-                child: const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'PandemicShield',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
-                    ),
-                    Text(context.tr('app.tagline'), style: const TextStyle(color: AppColors.sidebarText, fontSize: 11.5)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          for (int i = 0; i < items.length; i++)
-            _NavItem(icon: items[i].$1, label: context.tr(items[i].$2), selected: page == i, onTap: () => onSelect(i)),
-          const Spacer(),
-          const _LanguageSwitch(),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(color: AppColors.sidebarRaised, borderRadius: BorderRadius.circular(10)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 2, 8, 18),
             child: Row(
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: online ? AppColors.primaryBright : AppColors.danger,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: (online ? AppColors.primaryBright : AppColors.danger).withValues(alpha: 0.6), blurRadius: 8),
-                    ],
+                Container(
+                  width: 22,
+                  height: 22,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: p.ink, borderRadius: BorderRadius.circular(5)),
+                  child: Text(
+                    'PS',
+                    style: TextStyle(color: p.onInk, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: -0.2),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(context.tr(online ? 'status.online' : 'status.offline'), style: const TextStyle(color: Colors.white, fontSize: 12.5)),
+                Text(
+                  'PandemicShield',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: p.text),
+                ),
+              ],
+            ),
+          ),
+          for (int i = 0; i < items.length; i++)
+            _NavItem(icon: items[i].$1, label: context.tr(items[i].$2), count: items[i].$3, selected: page == i, onTap: () => onSelect(i)),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(color: store.online ? p.success : p.danger, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    context.tr(store.online ? 'status.online' : 'status.offline'),
+                    style: TextStyle(fontSize: 12, color: p.muted),
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 10),
-          Text(context.tr('disclaimer'), style: const TextStyle(color: AppColors.sidebarText, fontSize: 11)),
+          Row(
+            children: [
+              Expanded(
+                child: ChoiceTabsCompact(
+                  options: const [(AppLanguage.uk, 'УКР'), (AppLanguage.en, 'EN')],
+                  value: language.value,
+                  onChanged: (v) => language.value = v,
+                ),
+              ),
+              const SizedBox(width: 6),
+              IconButton(
+                tooltip: context.tr('theme.toggle'),
+                onPressed: onToggleTheme,
+                icon: Icon(p.brightness == Brightness.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 17),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(context.tr('disclaimer'), style: TextStyle(fontSize: 11, color: p.faint, height: 1.4)),
+          ),
         ],
       ),
     );
@@ -186,44 +202,45 @@ class _Sidebar extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final int count;
   final bool selected;
   final VoidCallback onTap;
 
-  const _NavItem({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _NavItem({required this.icon, required this.label, required this.count, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final p = context.p;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 1),
       child: Material(
-        color: selected ? AppColors.primaryBright.withValues(alpha: 0.12) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        color: selected ? p.selected : Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          hoverColor: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(6),
+          hoverColor: p.hover,
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
             child: Row(
               children: [
-                Icon(icon, size: 20, color: selected ? AppColors.primaryBright : AppColors.sidebarText),
-                const SizedBox(width: 12),
+                Icon(icon, size: 17, color: selected ? p.text : p.muted),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     label,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: selected ? Colors.white : AppColors.sidebarText,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      fontSize: 14,
+                      fontSize: 13,
+                      color: selected ? p.text : p.muted,
+                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                     ),
                   ),
                 ),
-                if (selected)
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(color: AppColors.primaryBright, shape: BoxShape.circle),
+                if (count > 0)
+                  Text(
+                    '$count',
+                    style: TextStyle(fontSize: 12, color: p.faint, fontFeatures: const [FontFeature.tabularFigures()]),
                   ),
               ],
             ),
@@ -234,46 +251,53 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _LanguageSwitch extends StatelessWidget {
-  const _LanguageSwitch();
+/// Перемикач мови в бічній панелі (компактніший за ChoiceTabs і на всю ширину).
+class ChoiceTabsCompact<T> extends StatelessWidget {
+  final List<(T, String)> options;
+  final T value;
+  final ValueChanged<T> onChanged;
+
+  const ChoiceTabsCompact({super.key, required this.options, required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    final controller = L10n.controllerOf(context);
-    Widget option(AppLanguage language, String label) {
-      final selected = controller.value == language;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => controller.value = language,
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.primaryBright.withValues(alpha: 0.18) : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected ? Colors.white : AppColors.sidebarText,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12.5,
-                  letterSpacing: 0.6,
+    final p = context.p;
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: p.border),
+      ),
+      child: Row(
+        children: [
+          for (final (option, label) in options)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(option),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: option == value ? p.selected : Colors.transparent,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: option == value ? p.text : p.faint,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: AppColors.sidebarRaised, borderRadius: BorderRadius.circular(10)),
-      child: Row(children: [option(AppLanguage.uk, 'УКР'), option(AppLanguage.en, 'EN')]),
+        ],
+      ),
     );
   }
 }

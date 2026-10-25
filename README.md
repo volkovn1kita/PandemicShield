@@ -12,21 +12,23 @@
 
 ## 📸 System Interface
 
-<img width="100%" alt="Overview" src="docs/images/overview.png" />
+<img width="100%" alt="Genomes" src="docs/images/genomes.png" />
 
-> *Overview: new analysis in three steps, recent runs, most frequent alerts.*
-
-<img width="100%" alt="Samples" src="docs/images/samples.png" />
-
-> *Samples: Nextclade clade, Pango lineage, QC, coverage and rule alerts for every genome; mutation search across all samples.*
+> *Genomes: clade (coloured chronologically, like Nextstrain), Pango lineage, QC, coverage, a per-genome mutation bar (like Nextclade's sequence view) and matched rules.*
 
 <img width="100%" alt="Genome detail" src="docs/images/genome-detail.png" />
 
-> *Genome detail: genome map with substitutions, deletions and alert labels; protein changes grouped by gene.*
+> *Genome detail in a side panel: matched rules, genome map with alert labels, protein changes grouped by gene.*
 
-<img width="100%" alt="Variant rules" src="docs/images/rules.png" />
+<img width="100%" alt="Dark theme" src="docs/images/dark.png" />
 
-> *Variant rules: live explanation of the notation, examples in one click.*
+> *Dark theme and English UI.*
+
+| Runs | Alerts | Rules |
+|---|---|---|
+| <img alt="Runs" src="docs/images/runs.png" /> | <img alt="Alerts" src="docs/images/alerts.png" /> | <img alt="Rules" src="docs/images/rules.png" /> |
+
+The UI follows a written design system ([`docs/DESIGN.md`](docs/DESIGN.md)) modelled on Linear, Vercel Geist and Nextclade Web.
 
 ---
 
@@ -65,7 +67,7 @@ This project implements a highly scalable pipeline to process gigabytes of data 
 * **Nextclade analysis:** Clade, Pango lineage, QC and all mutations per genome, with dataset version stored for reproducibility; re-run any stored sample with a newer dataset or new rules.
 * **Variant rules:** `S:N501Y`, `S:E484` (any change), `S:F157-`, `A23403G`, `clade:Delta`, `lineage:BA.2.86*` (with descendants through Pango aliases).
 * **Cross-sample search:** which genomes in all runs carry `S:E484K`?
-* **Bilingual desktop UI:** Ukrainian / English switch, bundled IBM Plex fonts, genome map visualisation.
+* **Desktop UI:** Ukrainian / English, light / dark theme, bundled IBM Plex fonts, per-genome mutation bars and genome map.
 * **Genomic coordinates:** Findings are reported as `record:start-end (strand)`, 1-based like NCBI/GenBank, and linked to an analysis run (sample).
 * **Live Sync UI:** Flutter desktop app automatically polls and renders detected threats in real-time without locking the UI thread.
 * **Dynamic Threat Dictionary:** Full CRUD capabilities; workers reload the dictionary every 15 seconds, no restart needed.
@@ -111,7 +113,7 @@ dotnet test PandemicShield.slnx   # Bio core + Nextclade result parsing and rule
 
 ## 🧪 How to Test
 ### Nextclade (recommended)
-Upload `PandemicShield.Nextclade.Tests/Data/sars-cov-2-examples.fasta` with sample type **Virus** and dataset **SARS-CoV-2**. It holds seven real genomes (Alpha, Beta, Delta, BA.2, JN.3.3, EG.5.1, JF.4) and one too-short sequence. On the Samples page you should see their clades and lineages, 13 alerts from the default rules (e.g. Beta: `S:E484K`, `S:N501Y`; Delta: `Delta`, `S:L452R`, `S:P681R`; JN.3.3: `BA.2.86*`, `S:E484K`, `S:N501Y`, `S:P681R`) and the short sequence marked as not analysed.
+Upload `PandemicShield.Nextclade.Tests/Data/sars-cov-2-examples.fasta` with sample type **Virus** and dataset **SARS-CoV-2**. It holds seven real genomes (Alpha, Beta, Delta, BA.2, JN.3.3, EG.5.1, JF.4) and one too-short sequence. On the Genomes page you should see their clades and lineages, 13 alerts from the default rules (e.g. Beta: `S:E484K`, `S:N501Y`; Delta: `Delta`, `S:L452R`, `S:P681R`; JN.3.3: `BA.2.86*`, `S:E484K`, `S:N501Y`, `S:P681R`) and the short sequence marked as not analysed.
 
 ### ORF motif scan (learning mode)
 Generate a realistic test file from the SARS-CoV-2 Wuhan-Hu-1 reference (MN908947) with the Spike D614G and Delta (E156G/Δ157-158) mutations, plus its reverse complement as a second record:

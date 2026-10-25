@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PandemicShield.Api.Extensions;
 using PandemicShield.Bio.Variants;
 using PandemicShield.DataAccess.Data;
@@ -23,6 +23,25 @@ namespace PandemicShield.Api.Endpoints
                     .OrderBy(s => s.SeqName)
                     .ToListAsync();
                 return Results.Ok(sequences);
+            });
+
+            // Компактні позиції замін і делецій для міні-карти геному в кожному рядку таблиці (як «Sequence view» у Nextclade Web).
+            app.MapGet("/api/runs/{id}/genome-marks", async (Guid id, PandemicDbContext db) =>
+            {
+                var rows = await db.Mutations
+                    .Where(m => m.RunId == id && (m.Kind == "NucleotideSubstitution" || m.Kind == "NucleotideDeletion"))
+                    .Select(m => new { m.SequenceResultId, m.Kind, m.Position, m.EndPosition })
+                    .ToListAsync();
+
+                var marks = rows
+                    .GroupBy(r => r.SequenceResultId)
+                    .Select(g => new
+                    {
+                        SequenceResultId = g.Key,
+                        Substitutions = g.Where(r => r.Kind == "NucleotideSubstitution").Select(r => r.Position).OrderBy(p => p).ToList(),
+                        Deletions = g.Where(r => r.Kind == "NucleotideDeletion").Select(r => new[] { r.Position, r.EndPosition ?? r.Position }).ToList()
+                    });
+                return Results.Ok(marks);
             });
 
             app.MapGet("/api/sequences/{id}/mutations", async (Guid id, PandemicDbContext db) =>
