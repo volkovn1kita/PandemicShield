@@ -147,6 +147,7 @@ The unmodified reference (`PandemicShield.Bio.Tests/Data/MN908947.fasta`) gives 
 ## 📚 Documentation
 * [`docs/DOMAIN_GUIDE.md`](docs/DOMAIN_GUIDE.md): biology primer (DNA, codons, ORFs, mutations, file formats) and how it maps to the code.
 * [`docs/BIOLOGY_REVIEW.md`](docs/BIOLOGY_REVIEW.md): biological audit of the original implementation and field research.
+* [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md): running it on your machine, where to get genomes, what is feasible at home.
 * [`docs/DIRECTION.md`](docs/DIRECTION.md): where the project should go next and why.
 * [`docs/STAGE2_NEXTCLADE.md`](docs/STAGE2_NEXTCLADE.md): Nextclade integration, variant rules and the new UI: what and why.
 * [`docs/STAGE3_AMR.md`](docs/STAGE3_AMR.md): bacterial antimicrobial resistance with AMRFinderPlus: what and why.

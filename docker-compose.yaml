@@ -94,6 +94,8 @@ services:
       context: .
       dockerfile: PandemicShield.AmrFinder/Dockerfile
     container_name: pandemic_amrfinder
+    # Воркер зібрано під linux-x64; на Apple Silicon Docker запустить його через емуляцію
+    platform: linux/amd64
     restart: always
     environment:
       - RABBITMQ_HOST=rabbitmq
