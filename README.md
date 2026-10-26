@@ -1,181 +1,212 @@
-# 🧬 Pandemic Shield - Bio-Security DNA Analysis System
+# 🧬 Pandemic Shield: genomic surveillance on your own machine
 
-![.NET](https://img.shields.io/badge/.NET-10.0%2B-512BD4?logo=dotnet)
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)
 ![Flutter](https://img.shields.io/badge/Flutter-Desktop-02569B?logo=flutter)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Message%20Broker-FF6600?logo=rabbitmq)
-![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker)
+![Docker](https://img.shields.io/badge/Docker-10%20containers-2496ED?logo=docker)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql)
+![Tests](https://img.shields.io/badge/tests-210%20passing-2E7D32)
 
-**Pandemic Shield** is an event-driven, self-hosted platform for viral genomic surveillance. Upload `.fasta` genomes and it runs [Nextclade](https://docs.nextstrain.org/projects/nextclade/) offline to assign clades and Pango lineages, check sequence quality and call every mutation; it keeps the history of your samples, lets you search a mutation across all of them and raises alerts on the variants you define (e.g. `S:E484K`, `clade:Delta`, `lineage:BA.2.86*`). For bacterial genome assemblies it runs [NCBI AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/) offline to find antimicrobial resistance genes and point mutations (e.g. carbapenemases such as NDM and OXA-48) and summarises the predicted resistance per antibiotic group, and types the strain with MLST (e.g. *K. pneumoniae* ST147). Open NCBI data is a first-class input: import up to 500 accessions or an NCBI Datasets archive at once, and follow antimicrobial resistance in Ukraine on a dashboard built from NCBI Pathogen Detection. Raw reads are accepted too: Illumina or Nanopore FASTQ becomes a viral consensus genome or a bacterial assembly (SKESA, or Flye polished with Racon). Mixed files are fine: `nextclade sort` picks the right dataset for every sequence. The app updates live over SignalR. Every sample can be exported as a PDF or CSV report. The Explorer tab is a learning mode: open a FASTA or GenBank file or just type an NCBI accession, see ORFs in 6 frames next to the annotated genes, translate one, search a motif, find its 3D structure in PDB and AlphaFold, and align two sequences. The desktop app speaks Ukrainian and English.
+**Pandemic Shield** is a self-hosted, event-driven platform for viral and bacterial genomic surveillance with a desktop app in Ukrainian and English.
+Drop in a genome or raw sequencer reads and it tells you what it is, which variant or strain, which mutations and resistance genes it carries, and raises alerts on the rules you define.
+Everything runs offline on your machine. Only NCBI import and 3D structure lookup need the internet.
+
+| You have | You get |
+|---|---|
+| Viral genomes (FASTA): SARS-CoV-2, influenza, RSV, mpox, even mixed in one file | Clade, Pango lineage, QC, coverage, every mutation ([Nextclade](https://docs.nextstrain.org/projects/nextclade/), dataset picked per sequence by `nextclade sort`) |
+| Bacterial assemblies (FASTA) | Resistance genes and point mutations per antibiotic group ([NCBI AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/)), sequence type (MLST, e.g. *K. pneumoniae* ST147) |
+| Raw reads (FASTQ) from Illumina or Oxford Nanopore | A consensus genome for viruses or an assembly for bacteria (SKESA, or Flye polished with Racon), then the same analysis |
+| Nothing at all | Up to 500 NCBI accessions or an NCBI Datasets archive imported in one go, and a dashboard of antimicrobial resistance in Ukraine from NCBI Pathogen Detection |
+| A GenBank record or just an accession | **Explorer**, a learning mode: ORFs in 6 frames next to the annotated genes, protein, motif search, 3D structures from PDB and AlphaFold, pairwise alignment |
+
+Every sample can be exported as a PDF or CSV report with database versions for reproducibility, and the app updates live over SignalR.
+
+> ⚠️ Pandemic Shield is a research and educational tool. It is **not** a medical device and must not be used for diagnosis. A resistance gene is a prediction, not an antibiogram.
 
 ---
 
-## 📸 System Interface
+## 📸 Interface
 
 <img width="100%" alt="Genomes" src="docs/images/genomes.png" />
 
-> *Genomes: clade (coloured chronologically, like Nextstrain), Pango lineage, QC, coverage, a per-genome mutation bar (like Nextclade's sequence view) and matched rules.*
+> *Genomes: seven SARS-CoV-2 variants from one file. Clade (coloured chronologically, like Nextstrain), dataset chosen automatically, Pango lineage, QC, coverage, a mutation bar per genome and the rules that fired.*
 
 <img width="100%" alt="Genome detail" src="docs/images/genome-detail.png" />
 
-> *Genome detail in a side panel: matched rules, genome map with alert labels, protein changes grouped by gene.*
+> *Genome detail: matched rules (Delta, `S:L452R`, `S:P681R`), the genome map with alert labels, protein changes grouped by gene.*
 
 <img width="100%" alt="Bacterial resistance" src="docs/images/amr.png" />
 
-> *Bacterial isolate: predicted resistance per antibiotic group (AMRFinderPlus) and all findings with resistance / stress / virulence filters.*
+> *Bacterial isolate from NCBI: hypervirulent *K. pneumoniae* ST23 carrying NDM-1 and OXA-48. MLST profile, predicted resistance per antibiotic group, and the rule for a high-risk clone.*
 
-<img width="100%" alt="Dark theme" src="docs/images/dark.png" />
+<img width="100%" alt="AMR surveillance" src="docs/images/surveillance.png" />
 
-> *Dark theme and English UI.*
+> *AMR surveillance from NCBI Pathogen Detection: 238 Ukrainian Klebsiella isolates, 86% with a carbapenemase (NDM, OXA-48, KPC), by year, gene, region and source. One click imports and analyses any isolate.*
 
-| Runs | Alerts | Rules |
+<img width="100%" alt="Explorer" src="docs/images/explorer.png" />
+
+> *Explorer: SARS-CoV-2 opened by accession. ORFs in six frames under the annotated genes. The Spike ORF starts 9 codons before the real start, and the furin site `PRRAR` is found by a motif search.*
+
+<img width="100%" alt="Explorer 3D structures" src="docs/images/explorer-3d.png" />
+
+> *Explorer: 3D structures for the selected protein from RCSB PDB (sequence search) and the AlphaFold DB model with its pLDDT.*
+
+| Runs | New analysis | Explorer: open by NCBI accession |
 |---|---|---|
-| <img alt="Runs" src="docs/images/runs.png" /> | <img alt="Alerts" src="docs/images/alerts.png" /> | <img alt="Rules" src="docs/images/rules.png" /> |
+| <img alt="Runs" src="docs/images/runs.png" /> | <img alt="New analysis" src="docs/images/new-analysis.png" /> | <img alt="Open by accession" src="docs/images/explorer-ncbi.png" /> |
+
+| Alerts | Rules | Dark theme, English |
+|---|---|---|
+| <img alt="Alerts" src="docs/images/alerts.png" /> | <img alt="Rules" src="docs/images/rules.png" /> | <img alt="Dark theme" src="docs/images/dark.png" /> |
 
 The UI follows a written design system ([`docs/DESIGN.md`](docs/DESIGN.md)) modelled on Linear, Vercel Geist and Nextclade Web.
 
 ---
 
-## 🏗️ The Engineering Challenge & Solution
+## ✨ Features
 
-### The Problem: Memory Overload with Big Data
-A standard human genome or large viral dataset `.fasta` file can exceed **3 GB** in plain text. Loading this directly into server RAM using traditional HTTP POST requests causes `OutOfMemoryException` and crashes standard monolithic backends.
+**Viruses**
+* **Nextclade, offline:** clade, Pango lineage, QC and all mutations per genome. Datasets are baked into the image: SARS-CoV-2, influenza H1N1pdm and H3N2 HA, RSV-A/B, mpox. The dataset version is stored, so any sample can be re-run with a newer dataset or new rules.
+* **Automatic dataset choice:** `nextclade sort` assigns every sequence its own dataset, so different viruses can share one FASTA. Unrecognised sequences are flagged instead of failing the run.
+* **Variant rules and alerts:** `S:N501Y`, `S:E484` (any change), `S:F157-`, `A23403G`, `clade:Delta`, `lineage:BA.2.86*` (descendants are resolved through Pango aliases).
 
-### The Solution: Streaming & Event-Driven Architecture
-This project implements a highly scalable pipeline to process gigabytes of data using a strict **4 GB RAM constraint** via Docker containers.
+**Bacteria**
+* **Antimicrobial resistance (AMRFinderPlus 4.2.7):** genes and species-specific point mutations, predicted resistance per antibiotic group, rules such as `subclass:CARBAPENEM` or `gene:blaKPC*`.
+* **MLST (`mlst` 2.35.0, PubMLST schemes):** sequence type and allele profile, with rules for high-risk clones (`st:klebsiella/147`). A tie between schemes is broken by assembly GC content.
 
-1. **gRPC Streaming:** The API ingests the massive file and immediately streams it in **32 KB chunks** via gRPC to the Parser service.
-2. **Backpressure & Queuing:** The Parser translates the chunks into DTOs and publishes them to **RabbitMQ**. A deliberate backpressure mechanism (artificial delay) is implemented to prevent the message broker from flooding, balancing the ingestion rate with the processing rate.
-3. **Record-aware windows:** The Parser parses FASTA records on the fly (headers, line breaks, case and IUPAC codes are handled) and cuts each record into overlapping windows, so nothing is lost at chunk boundaries and memory stays bounded.
-4. **Distributed Workers:** Worker nodes consume windows asynchronously, find Open Reading Frames in all **6 reading frames** (both DNA strands) and scan the translated proteins against a PostgreSQL dictionary using Entity Framework Core.
+**Raw reads (FASTQ)**
+* **Viruses:** minimap2 maps the reads to the references of every installed Nextclade dataset, the best match is chosen, and `samtools consensus` builds the genome.
+* **Bacteria:** fastp + SKESA for Illumina; Flye + two rounds of Racon polishing for Nanopore.
+* Read count, mapping rate, depth or N50 go into the run and the PDF report.
 
----
+**Open data**
+* **Bulk NCBI import:** up to 500 accessions (`OQ291490.1`, `GCA_009887825.1`) or an NCBI Datasets / NCBI Virus ZIP. Viral sequences become one run. Each bacterial assembly becomes its own run, with the species taken from NCBI metadata.
+* **AMR surveillance dashboard:** NCBI Pathogen Detection files (up to ~830 MB) are streamed and filtered by country (Ukraine by default, compare with neighbours). The dashboard shows isolates per year with and without a carbapenemase, carbapenemase families, gene × year heatmap, regions and sources.
 
-## ⚙️ Architecture Diagram
+**Explorer (learning mode)**
+* Open FASTA or GenBank, paste text, or type an NCBI accession; examples include a plasmid, phage phiX174, the human mitochondrion, HIV-1, phage lambda and SARS-CoV-2.
+* ORF map in 6 frames next to the GenBank annotation, with zoom, circular molecules (ORFs crossing the origin) and the genetic code taken from `/transl_table`.
+* Protein view with motif search; 3D structures from RCSB PDB and AlphaFold DB.
+* Pairwise alignment (affine-gap Gotoh, BLOSUM62 for proteins): an ORF against its annotated gene, two records, or two pasted sequences.
 
-### Microservices Breakdown:
-* **API Gateway (ASP.NET Core Minimal APIs):** Handles HTTP Multipart file uploads and serves REST endpoints for the Flutter frontend.
-* **Parser Service (gRPC):** Receives the binary stream, chunks the data, and publishes `DnaChunkMessage` events.
-* **Nextclade worker (`PandemicShield.Nextclade`):** Consumes `nextclade_jobs`, runs the Nextclade CLI offline against datasets baked into its image (SARS-CoV-2, influenza H1N1pdm/H3N2 HA, RSV-A/B, mpox), stores per-genome clade, lineage, QC and mutations, and evaluates variant rules into alerts.
-* **AMRFinderPlus worker (`PandemicShield.AmrFinder`):** Consumes `amrfinder_jobs`, runs NCBI AMRFinderPlus 4.2.7 inside the official `ncbi/amr` image (database bundled, offline), stores resistance/stress/virulence findings and evaluates gene/class rules into alerts.
-* **Bio library (`PandemicShield.Bio`):** Dependency-free biological core: streaming FASTA reader, IUPAC nucleotides, NCBI genetic code tables, overlapping windows, 6-frame ORF finder, protein motif scanner. Covered by golden tests on the SARS-CoV-2 reference genome.
-* **MLST worker (`PandemicShield.Mlst`):** Consumes `mlst_jobs`, runs Torsten Seemann's `mlst` inside `staphb/mlst:2.35.0` (PubMLST schemes bundled, offline) and alerts on high-risk clones (`st:klebsiella/147`).
-* **NCBI import (in the API):** A hosted service consumes `import_jobs` and turns accession lists (E-utilities, Datasets API v2) or Datasets ZIPs into ordinary runs.
-* **Surveillance (in the AMRFinderPlus worker):** Streams NCBI Pathogen Detection `amr.metadata.tsv` files (up to ~830 MB), keeps isolates from the chosen countries and classifies their genes with the AMRFinderPlus database.
-* **Worker Service (.NET Worker):** Subscribes to RabbitMQ and runs the Bio library on each window (`MutationScannerService`).
-* **Aggregator/DB Context:** EF Core implementation over PostgreSQL to store dictionaries and threat logs.
-* **Reads worker (`PandemicShield.Reads`):** Consumes `reads_jobs`: minimap2 + samtools consensus for viruses, fastp + SKESA (Illumina) or Flye + two rounds of Racon polishing (Nanopore) for bacteria, then hands the genome to the normal pipeline.
-* **Live updates:** every service publishes change events to the RabbitMQ fanout exchange `pandemic_events`; the API relays them to the SignalR hub `/hubs/events`.
-* **Frontend (Flutter Desktop):** A modern, clinical-themed desktop app that refreshes on SignalR events (polling only as a fallback).
-
----
-
-## ✨ Key Features
-
-* **Zero-Memory-Bloat Processing:** Safely handles 3GB+ files on constrained hardware.
-* **Open Reading Frame (ORF) Detection:** 6-frame search (forward + reverse complement), longest ORF per stop codon like NCBI ORFfinder, nested/overlapping ORFs, minimum length, NCBI genetic code tables 1/2/4/11.
-* **Nextclade analysis:** Clade, Pango lineage, QC and all mutations per genome, with dataset version stored for reproducibility; re-run any stored sample with a newer dataset or new rules.
-* **Variant rules:** `S:N501Y`, `S:E484` (any change), `S:F157-`, `A23403G`, `clade:Delta`, `lineage:BA.2.86*` (with descendants through Pango aliases).
-* **Bacterial resistance (AMRFinderPlus):** resistance genes and species-specific point mutations, predicted resistance per antibiotic group, rules such as `subclass:CARBAPENEM` or `gene:blaKPC*`.
-* **Cross-sample search:** which genomes in all runs carry `S:E484K`? Which isolates carry `blaNDM`? Which are ST147?
-* **Bulk import of open NCBI data:** up to 500 accessions (`OQ291490.1`, `GCA_009887825.1`) or an NCBI Datasets / NCBI Virus ZIP. Viral sequences become one run; every bacterial assembly becomes its own run with the species taken from NCBI metadata.
-* **Automatic dataset choice:** `nextclade sort` assigns every sequence its own dataset, so SARS-CoV-2, influenza and RSV can share one FASTA.
-* **Raw reads (FASTQ):** Illumina or Nanopore reads in, consensus genome or assembly out, with read and coverage stats in the report.
-* **Explorer:** ORF map in 6 frames with GenBank annotations and circular plasmids, protein and motif view, RCSB PDB and AlphaFold DB structures, pairwise alignment.
-* **AMR surveillance dashboard:** NCBI Pathogen Detection for a bacterial group and country (Ukraine by default): isolates per year with and without carbapenemases, carbapenemase families, gene × year heatmap, regions, sources, and one click to import and analyse any isolate yourself.
-* **MLST sequence typing:** ST, PubMLST scheme and allele profile for every bacterial run; rules such as `st:klebsiella/147`.
-* **Sample reports:** PDF (Ukrainian / English, with database versions for reproducibility) and CSV (stable columns for spreadsheets and scripts).
-* **Desktop UI:** Ukrainian / English, light / dark theme, bundled IBM Plex fonts, per-genome mutation bars and genome map.
-* **Genomic coordinates:** Findings are reported as `record:start-end (strand)`, 1-based like NCBI/GenBank, and linked to an analysis run (sample).
-* **Live Sync UI:** Flutter desktop app automatically polls and renders detected threats in real-time without locking the UI thread.
-* **Dynamic Threat Dictionary:** Full CRUD capabilities; workers reload the dictionary every 15 seconds, no restart needed.
-* **Dockerized Environment:** One-command deployment `docker-compose up --build` spins up all services, RabbitMQ, and PostgreSQL.
+**Everywhere**
+* **Cross-sample search:** which genomes carry `S:E484K`? Which isolates carry `blaNDM`? Which are ST147?
+* **Reports:** PDF (Ukrainian / English, with database versions) and CSV with stable columns.
+* **Live updates:** SignalR pushes changes to the app in about 2 s; polling is only a fallback.
+* **Desktop app:** Ukrainian / English, light / dark theme, bundled IBM Plex fonts.
 
 ---
 
-## 🚀 Getting Started (Local Development)
+## ⚙️ Architecture
+
+```mermaid
+flowchart LR
+    App[Flutter desktop app] -- REST --> API
+    API -- SignalR /hubs/events --> App
+    API -- gRPC stream --> Parser
+    Parser -- windows --> MQ[(RabbitMQ)]
+    API -- jobs --> MQ
+    MQ --> Worker[ORF worker]
+    MQ --> Nextclade[Nextclade worker]
+    MQ --> AMR[AMRFinderPlus worker]
+    MQ --> MLST[MLST worker]
+    MQ --> Reads[Reads worker]
+    Worker --> Aggregator
+    Aggregator --> DB[(PostgreSQL)]
+    Nextclade --> DB
+    AMR --> DB
+    MLST --> DB
+    Reads -- assembly or consensus --> MQ
+    API --> DB
+    Worker & Nextclade & AMR & MLST & Reads & Aggregator -. change events .-> MQ
+    MQ -. pandemic_events .-> API
+```
+
+| Service | What it does |
+|---|---|
+| **API** (ASP.NET Core minimal APIs) | Uploads, REST endpoints, NCBI import, Explorer sessions, reports, SignalR hub that relays change events |
+| **Parser** (gRPC) | Receives the uploaded file as a stream, parses FASTA records and publishes overlapping windows |
+| **Worker** | Finds ORFs in 6 frames and scans proteins for motifs (`PandemicShield.Bio`) |
+| **Aggregator** | Stores ORF motif findings |
+| **Nextclade** | `nextclade sort` + `nextclade run` with baked-in datasets, stores results and evaluates variant rules |
+| **AMRFinderPlus** | Runs AMRFinderPlus inside the official `ncbi/amr` image; also streams NCBI Pathogen Detection for the dashboard |
+| **MLST** | Runs `mlst` inside `staphb/mlst:2.35.0` |
+| **Reads** | minimap2 2.28, samtools 1.21, fastp 0.24.0, SKESA 2.5.1, Flye 2.9.5, Racon 1.5.0, seqkit 2.9.0 |
+| **RabbitMQ, PostgreSQL** | Queues and the `pandemic_events` fanout exchange; EF Core migrations |
+
+`PandemicShield.Bio` is the dependency-free biological core: streaming FASTA and GenBank readers, IUPAC codes, NCBI genetic code tables, 6-frame and circular ORF search, motif scanner and pairwise alignment. It has golden tests on the SARS-CoV-2 reference genome.
+
+### Big files, small memory
+A large `.fasta` can exceed **3 GB**. The API never loads it into memory: it streams the file in **32 KB chunks** over gRPC to the Parser. The Parser reads FASTA records on the fly (headers, line breaks, case, IUPAC codes) and cuts them into overlapping windows, so nothing is lost at chunk boundaries. Windows go through RabbitMQ with backpressure to workers that run in parallel, so memory use stays bounded however big the file is.
+
+---
+
+## 🚀 Getting started
 
 ### Prerequisites
-* Docker Desktop
-* Flutter SDK (for desktop compilation)
-* .NET SDK 
+* Docker Desktop (Windows / macOS) or Docker Engine + Compose. Give Docker at least 6 GB of RAM (10 GB to assemble bacteria from FASTQ) and keep **~15 GB of free disk** for images.
+* Flutter SDK for the desktop app.
+* .NET 10 SDK to run the tests.
 
-### Running the Backend
-1. Clone the repository.
-2. Navigate to the root folder where `docker-compose.yml` is located.
-3. Run the following command to spin up the cluster:
-   ```bash
-   docker-compose up --build -d
-   ```
-4. The API will be available at `http://localhost:5020`
-
-> The first build of the `nextclade` and `amrfinder` services downloads Nextclade 3.24.0 with its datasets and the `ncbi/amr` image (~400 MB, AMRFinderPlus with its database), so it needs internet access once; after that analysis runs fully offline. Uploaded files are kept in the `run_data` Docker volume so samples can be re-analysed.
-
-> **Upgrading from an older version:** the database schema is now managed by EF Core migrations.
-> If you ran the previous version, reset the database once with `docker-compose down` before `up`
-> (the Postgres container has no volume, so this only removes old demo data).
-
-### Running the tests
+### Backend
 ```bash
-dotnet test PandemicShield.slnx   # Bio core, Nextclade, AMRFinderPlus, MLST, NCBI import, surveillance and reports (156 tests)
+docker compose up --build -d
+```
+The API listens on `http://localhost:5020`, and the RabbitMQ UI is at `http://localhost:15672` (guest / guest).
+All 10 containers wait for PostgreSQL and RabbitMQ to be healthy and restart together with Docker Desktop.
+
+> The first build downloads Nextclade 3.24.0 with its datasets, the `ncbi/amr` and `staphb/mlst` images and the read tools from bioconda, so it needs internet access once. After that, analysis runs offline. Uploaded files are kept in the `run_data` volume so samples can be re-analysed. Database data lives in the Postgres container, so `docker compose down` resets it.
+
+### Desktop app
+```bash
+cd pandemic_shield_desktop
+flutter run -d windows   # or macos / linux
 ```
 
-### Running the Frontend
-1. Navigate to the `pandemic_shield_desktop` directory.
-2. Run the Flutter app:
-   ```bash
-   flutter run -d windows  # (or macos/linux depending on your OS)
-   ```
+### Tests
+```bash
+dotnet test PandemicShield.slnx   # 210 tests: Bio core, Nextclade, AMRFinderPlus, MLST, FASTQ, NCBI import, surveillance, reports, Explorer
+```
 
 ---
 
-## 🧪 How to Test
-### Nextclade (recommended)
-Upload `PandemicShield.Nextclade.Tests/Data/sars-cov-2-examples.fasta` with sample type **Virus** and dataset **SARS-CoV-2**. It holds seven real genomes (Alpha, Beta, Delta, BA.2, JN.3.3, EG.5.1, JF.4) and one too-short sequence. On the Genomes page you should see their clades and lineages, 13 alerts from the default rules (e.g. Beta: `S:E484K`, `S:N501Y`; Delta: `Delta`, `S:L452R`, `S:P681R`; JN.3.3: `BA.2.86*`, `S:E484K`, `S:N501Y`, `S:P681R`) and the short sequence marked as not analysed.
+## 🧪 Try it
 
-### Bacterial resistance (AMRFinderPlus)
-Upload `PandemicShield.AmrFinder.Tests/Data/kpneumoniae-demo.fasta` with sample type **Bacterium** and species *Klebsiella pneumoniae*. It is a synthetic assembly carrying the reference blaNDM-1, blaOXA-48 and blaCTX-M-15 genes; expect predicted resistance to carbapenems and cephalosporins and 3 alerts. `amrfinder-test-contigs.fasta` (AMRFinderPlus's own test contigs, species *Escherichia*) gives 24 findings including colistin (`pmrB_C84R`), vancomycin (`vanG`) and Shiga toxin genes.
+| Input | How | What you should see |
+|---|---|---|
+| `PandemicShield.Nextclade.Tests/Data/sars-cov-2-examples.fasta` | New analysis → Virus, dataset "Detect automatically" | 7 real genomes (Alpha, Beta, Delta, BA.2, JN.3.3, EG.5.1, JF.4) and one too-short sequence; 13 alerts, e.g. Delta: `Delta`, `S:L452R`, `S:P681R` |
+| `PandemicShield.Nextclade.Tests/Data/sort/mixed.fasta` | Same | SARS-CoV-2, influenza H3N2 and RSV-A in one file, each with its own dataset |
+| `PandemicShield.AmrFinder.Tests/Data/kpneumoniae-demo.fasta` | Bacterium, *Klebsiella pneumoniae* | NDM-1, OXA-48, CTX-M-15: resistance to carbapenems and cephalosporins, 3 alerts |
+| NCBI accessions, e.g. `GCA_059491835.1` | Runs → Import from NCBI, type Bacterium | Hypervirulent ST23 with NDM-1 and OXA-48 |
+| AMR surveillance | Update from NCBI, group *Klebsiella*, country Ukraine | ~240 isolates, ~86% with a carbapenemase |
+| Simulated reads | `python docs/scripts/simulate_reads.py genome.fasta sample --platform illumina --depth 200` (or `nanopore --depth 30`), then New analysis → FASTQ | The consensus reproduces the genome's mutations; a bacterial assembly gives its genes and ST |
+| Explorer | From NCBI → `NC_045512.2`, `J01749.1`, `NC_012920.1`… | Spike start and the ORF1ab frameshift, plasmid genes on both strands, mitochondrial code |
 
-### ORF motif scan (learning mode)
-Generate a realistic test file from the SARS-CoV-2 Wuhan-Hu-1 reference (MN908947) with the Spike D614G and Delta (E156G/Δ157-158) mutations, plus its reverse complement as a second record:
-```bash
-python3 docs/scripts/make_test_fasta.py > mutant.fasta
-```
-Upload `mutant.fasta` with category **Virus**. Expected findings (1-based):
-
-| Record | Strand | Location | Marker |
-|---|---|---|---|
-| mutant_fwd | + | 21989-22054 | Delta: Spike E156G + del157-158 |
-| mutant_fwd | + | 23375-23419 | Spike D614G |
-| mutant_rc | - | 6479-6523 | Spike D614G |
-| mutant_rc | - | 7844-7909 | Delta: Spike E156G + del157-158 |
-
-The unmodified reference (`PandemicShield.Bio.Tests/Data/MN908947.fasta`) gives no findings.
-
-> ⚠️ Pandemic Shield is a research and educational tool. It is **not** a medical device and must not be used for diagnosis.
+The legacy ORF motif scan can be checked with `python3 docs/scripts/make_test_fasta.py > mutant.fasta` (category Virus). It gives exactly 4 findings (Delta and D614G on both strands), while the unmodified `MN908947.fasta` gives none.
 
 ---
 
 ## 📚 Documentation
+* [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md): running it, where to get genomes and reads, what is feasible at home.
 * [`docs/DOMAIN_GUIDE.md`](docs/DOMAIN_GUIDE.md): biology primer (DNA, codons, ORFs, mutations, file formats) and how it maps to the code.
-* [`docs/BIOLOGY_REVIEW.md`](docs/BIOLOGY_REVIEW.md): biological audit of the original implementation and field research.
-* [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md): running it on your machine, where to get genomes, what is feasible at home.
-* [`docs/DIRECTION.md`](docs/DIRECTION.md): where the project should go next and why.
-* [`docs/STAGE2_NEXTCLADE.md`](docs/STAGE2_NEXTCLADE.md): Nextclade integration, variant rules and the new UI: what and why.
-* [`docs/STAGE3_AMR.md`](docs/STAGE3_AMR.md): bacterial antimicrobial resistance with AMRFinderPlus: what and why.
-* [`docs/STAGE4_DATA.md`](docs/STAGE4_DATA.md): NCBI import, AMR surveillance dashboard, MLST and sample reports: what and why.
+* [`docs/DIRECTION.md`](docs/DIRECTION.md): where the project is going and why.
+* [`docs/STAGE2_NEXTCLADE.md`](docs/STAGE2_NEXTCLADE.md): Nextclade, variant rules and the UI.
+* [`docs/STAGE3_AMR.md`](docs/STAGE3_AMR.md): bacterial resistance with AMRFinderPlus.
+* [`docs/STAGE4_DATA.md`](docs/STAGE4_DATA.md): NCBI import, AMR surveillance, MLST and reports.
+* [`docs/STAGE5_READS_EXPLORER.md`](docs/STAGE5_READS_EXPLORER.md): `nextclade sort`, SignalR, FASTQ (with checks against a known genome) and Explorer.
+* [`docs/BIOLOGY_REVIEW.md`](docs/BIOLOGY_REVIEW.md): biological audit of the original implementation.
 * [`docs/DESIGN.md`](docs/DESIGN.md): the design system behind the desktop UI.
 
 ---
 
-## 🔮 Known Limitations & Future Roadmap
+## 🔮 Known limitations and roadmap
 
-* **Motif matching is a simplified model.** ORF motifs are exact amino-acid motifs inside ORF proteins; they miss synonymous/non-coding mutations and break when another mutation sits inside the motif (on the example genomes the D614G motif misses JN.3.3 because of S:P621S). Use Nextclade variant rules for surveillance.
-* **One Nextclade dataset per run.** Mixed-virus files are not split automatically yet (`nextclade sort` is planned).
-* **ORF ≠ gene.** Programmed ribosomal frameshifts (e.g. coronavirus ORF1ab), spliced eukaryotic genes (introns) and real start sites are defined by genome annotation, not by ORF search.
-* **Very long ORFs at window boundaries.** ORFs longer than the window flank (`WINDOW_FLANK_SIZE`, 32 768 nt by default) that cross a window boundary are not reported.
-* **Gene ≠ phenotype.** AMRFinderPlus predicts resistance from genes and mutations; clinical decisions need a lab susceptibility test. Bacterial input must be an assembly (contigs), not raw reads.
-* **Input is consensus FASTA only.** FASTQ/BAM/VCF are not supported yet; FASTA cannot express diploid genotypes or mixed samples (wastewater needs Freyja).
-* **Surveillance data is what labs chose to publish.** NCBI Pathogen Detection is not a representative sample of a country; the dashboard says so under the charts.
+* **MLST is coarse for outbreaks.** ST11 is found worldwide. Saying "the same strain in two hospitals" needs genome-to-genome distance (SNP or cgMLST), which is the next big step. Klebsiella-specific typing (Kleborate: virulence, capsule) is also missing.
+* **Gene ≠ phenotype.** AMRFinderPlus predicts resistance; clinical decisions need a lab susceptibility test. Without a species, point mutations are not searched (the app suggests one from MLST).
+* **Nanopore assemblies are polished with Racon, not Medaka.** Racon fixes base errors but not assembly structure: a duplicated region can still yield an extra gene copy. Short-read (SKESA) assemblies, on the other hand, collapse repeated genes to one copy.
+* **The read simulator is for testing only.** Real sequencing errors are more complex.
+* **Surveillance data is what labs chose to publish.** NCBI Pathogen Detection is not a representative sample of a country; the dashboard says so.
+* **ORF ≠ gene.** Frameshifts, introns and real start sites come from annotation, not ORF search. Explorer shows this on purpose.
+* **Motif matching is simplified.** Exact amino-acid motifs miss synonymous changes and break when another mutation sits inside the motif. Use Nextclade rules for surveillance.
+* **Single machine, single user.** There is no authentication or audit log yet.
 * **No CI yet.** Tests and image builds run by hand; GitHub Actions is the first item of the roadmap.
-* **WebSockets/SignalR:** The UI still polls the visible page every 3 seconds; real-time progress via SignalR is planned.
