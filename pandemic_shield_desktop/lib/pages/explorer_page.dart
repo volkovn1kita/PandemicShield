@@ -289,7 +289,9 @@ class _ExplorerPageState extends State<ExplorerPage> {
 
   Widget _buildMap(dynamic record) {
     final p = context.p;
-    final features = List<dynamic>.from(record['features']).where((f) => f['type'] == 'CDS' || f['type'] == 'mat_peptide').toList();
+    // Лише CDS: mat_peptide (nsp1…nsp16 у RefSeq SARS-CoV-2) — частини поліпротеїну того самого гена, і в одній смузі
+    // з ним вони перекриваються й дублюють підпис ORF1ab.
+    final features = List<dynamic>.from(record['features']).where((f) => f['type'] == 'CDS').toList();
     final matching = _orfs.where((o) => o['matchesCds'] != null).length;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
@@ -1021,9 +1023,14 @@ class _StructureRow extends StatelessWidget {
                 width: 64,
                 height: 64,
                 color: p.hover,
+                // Для частини моделей AlphaFold (вірусні, ColabFold) картинки немає (404): тоді значок замість порожнього квадрата.
                 child: imageUrl == null
-                    ? null
-                    : Image.network(imageUrl!, fit: BoxFit.cover, errorBuilder: (_, _, _) => const SizedBox()),
+                    ? Icon(Icons.view_in_ar_outlined, size: 22, color: p.faint)
+                    : Image.network(
+                        imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Icon(Icons.view_in_ar_outlined, size: 22, color: p.faint),
+                      ),
               ),
             ),
             const SizedBox(width: 12),
