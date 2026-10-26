@@ -5,6 +5,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: pandemic_rabbitmq
+    # Після перезапуску Docker Desktop піднімається сам, інакше всі сервіси падають по колу без брокера.
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -20,6 +22,7 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: pandemic_db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: adminpostgres
       POSTGRES_PASSWORD: rootpassword
